@@ -1,12 +1,12 @@
-mod session_parser;
 mod optimizer;
+mod session_parser;
 
-use anyhow::Result;
 use crate::config::Config;
 use crate::db::Database;
-use session_parser::SessionParser;
-use optimizer::{Optimizer, Optimization};
+use anyhow::Result;
 use colored::Colorize;
+use optimizer::{Optimization, Optimizer};
+use session_parser::SessionParser;
 
 pub struct SessionAnalyzer {
     config: Config,
@@ -48,7 +48,11 @@ impl SessionAnalyzer {
         let mut total_potential_savings = 0;
 
         for session_path in sessions {
-            println!("\n{} Analyzing: {:?}", "→".bright_cyan(), session_path.file_name().unwrap());
+            println!(
+                "\n{} Analyzing: {:?}",
+                "→".bright_cyan(),
+                session_path.file_name().unwrap()
+            );
 
             let session_data = self.parser.parse_session(&session_path)?;
             let optimizations = self.optimizer.analyze(&session_data)?;
@@ -70,7 +74,10 @@ impl SessionAnalyzer {
         println!("  Potential token savings: ~{}", total_potential_savings);
 
         if total_optimizations > 0 {
-            println!("\n{}", "Run 'claude-helper optimize' for detailed recommendations".bright_green());
+            println!(
+                "\n{}",
+                "Run 'claude-helper optimize' for detailed recommendations".bright_green()
+            );
         }
 
         Ok(())
@@ -106,7 +113,12 @@ impl SessionAnalyzer {
 
     /// Optimize a specific session
     pub async fn optimize_session(&self, session_id: &str) -> Result<()> {
-        println!("\n{}", format!("Optimizing Session: {}", session_id).bright_cyan().bold());
+        println!(
+            "\n{}",
+            format!("Optimizing Session: {}", session_id)
+                .bright_cyan()
+                .bold()
+        );
         println!("{}", "═".repeat(60).bright_cyan());
 
         // Find session by ID
@@ -116,7 +128,10 @@ impl SessionAnalyzer {
         let optimizations = self.optimizer.analyze(&session_data)?;
 
         if optimizations.is_empty() {
-            println!("\n{}", "No optimization opportunities found for this session.".green());
+            println!(
+                "\n{}",
+                "No optimization opportunities found for this session.".green()
+            );
             return Ok(());
         }
 
@@ -127,10 +142,18 @@ impl SessionAnalyzer {
 
     fn display_optimizations(&self, optimizations: &[Optimization]) -> Result<()> {
         for (i, opt) in optimizations.iter().enumerate() {
-            println!("\n{} {}", format!("{}.", i + 1).bright_yellow().bold(), opt.title.white().bold());
+            println!(
+                "\n{} {}",
+                format!("{}.", i + 1).bright_yellow().bold(),
+                opt.title.white().bold()
+            );
             println!("  Type: {}", self.format_opt_type(&opt.opt_type));
             println!("  Description: {}", opt.description);
-            println!("  {} ~{} tokens per occurrence", "Savings:".green(), opt.estimated_savings);
+            println!(
+                "  {} ~{} tokens per occurrence",
+                "Savings:".green(),
+                opt.estimated_savings
+            );
 
             if !opt.examples.is_empty() {
                 println!("  Examples:");
@@ -146,7 +169,11 @@ impl SessionAnalyzer {
 
         println!("\n{}", "═".repeat(60).bright_cyan());
         let total_savings: usize = optimizations.iter().map(|o| o.estimated_savings).sum();
-        println!("{} {} tokens", "Total potential savings:".bright_green().bold(), total_savings);
+        println!(
+            "{} {} tokens",
+            "Total potential savings:".bright_green().bold(),
+            total_savings
+        );
 
         Ok(())
     }

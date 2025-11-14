@@ -1,6 +1,6 @@
+use super::session_parser::SessionData;
 use anyhow::Result;
 use std::collections::HashMap;
-use super::session_parser::SessionData;
 
 #[derive(Debug, Clone)]
 pub enum OptimizationType {
@@ -28,7 +28,9 @@ pub struct Optimizer {
 
 impl Optimizer {
     pub fn new(min_savings_threshold: usize) -> Self {
-        Self { min_savings_threshold }
+        Self {
+            min_savings_threshold,
+        }
     }
 
     pub fn analyze(&self, session: &SessionData) -> Result<Vec<Optimization>> {
@@ -65,7 +67,8 @@ impl Optimizer {
         let mut optimizations = Vec::new();
 
         // Find sequences of bash commands
-        let bash_calls: Vec<&str> = session.tool_calls
+        let bash_calls: Vec<&str> = session
+            .tool_calls
             .iter()
             .filter(|tc| tc.tool_name == "Bash")
             .filter_map(|tc| tc.parameters.get("command").and_then(|c| c.as_str()))
@@ -74,7 +77,8 @@ impl Optimizer {
         // Look for patterns like: git add . -> git commit -> git push
         if bash_calls.len() >= 3 {
             // Check for git workflows
-            let git_commands: Vec<&str> = bash_calls.iter()
+            let git_commands: Vec<&str> = bash_calls
+                .iter()
                 .filter(|cmd| cmd.starts_with("git"))
                 .copied()
                 .collect();
@@ -83,16 +87,23 @@ impl Optimizer {
                 optimizations.push(Optimization {
                     opt_type: OptimizationType::QuickCommand,
                     title: "Combine git operations into single command".to_string(),
-                    description: "Multiple sequential git commands can be combined with &&".to_string(),
+                    description: "Multiple sequential git commands can be combined with &&"
+                        .to_string(),
                     estimated_savings: git_commands.len() * 200, // ~200 tokens per command
                     examples: git_commands.iter().take(3).map(|s| s.to_string()).collect(),
-                    suggestion: Some("Use: git add . && git commit -m 'message' && git push".to_string()),
+                    suggestion: Some(
+                        "Use: git add . && git commit -m 'message' && git push".to_string(),
+                    ),
                 });
             }
 
             // Check for test + build workflows
-            let has_test = bash_calls.iter().any(|cmd| cmd.contains("test") || cmd.contains("jest") || cmd.contains("pytest"));
-            let has_build = bash_calls.iter().any(|cmd| cmd.contains("build") || cmd.contains("compile"));
+            let has_test = bash_calls
+                .iter()
+                .any(|cmd| cmd.contains("test") || cmd.contains("jest") || cmd.contains("pytest"));
+            let has_build = bash_calls
+                .iter()
+                .any(|cmd| cmd.contains("build") || cmd.contains("compile"));
 
             if has_test && has_build {
                 optimizations.push(Optimization {
@@ -120,7 +131,8 @@ impl Optimizer {
         }
 
         // Find files accessed together frequently
-        let frequently_accessed: Vec<_> = file_counts.iter()
+        let frequently_accessed: Vec<_> = file_counts
+            .iter()
             .filter(|(_, count)| **count >= 3)
             .collect();
 
@@ -132,10 +144,9 @@ impl Optimizer {
             if let Some(first_path) = paths.first() {
                 let first_dir = std::path::Path::new(first_path).parent();
 
-                let same_dir_count = paths.iter()
-                    .filter(|path| {
-                        std::path::Path::new(path).parent() == first_dir
-                    })
+                let same_dir_count = paths
+                    .iter()
+                    .filter(|path| std::path::Path::new(path).parent() == first_dir)
                     .count();
 
                 if same_dir_count >= 2 {
@@ -182,7 +193,10 @@ impl Optimizer {
                 optimizations.push(Optimization {
                     opt_type: OptimizationType::ToolCallBatching,
                     title: "Reduce redundant Grep searches".to_string(),
-                    description: format!("Found {} Grep calls - some might be redundant", grep_count),
+                    description: format!(
+                        "Found {} Grep calls - some might be redundant",
+                        grep_count
+                    ),
                     estimated_savings: (grep_count - 2) * 100,
                     examples: vec![format!("{} Grep tool calls in session", grep_count)],
                     suggestion: Some("Use more specific patterns or combine searches".to_string()),
@@ -196,10 +210,15 @@ impl Optimizer {
                 optimizations.push(Optimization {
                     opt_type: OptimizationType::ContextPruning,
                     title: "Many file reads detected".to_string(),
-                    description: format!("Found {} Read calls - consider if all are necessary", read_count),
+                    description: format!(
+                        "Found {} Read calls - consider if all are necessary",
+                        read_count
+                    ),
                     estimated_savings: (read_count - 5) * 300,
                     examples: vec![format!("{} Read tool calls in session", read_count)],
-                    suggestion: Some("Read only files that are directly relevant to the task".to_string()),
+                    suggestion: Some(
+                        "Read only files that are directly relevant to the task".to_string(),
+                    ),
                 });
             }
         }

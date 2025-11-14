@@ -2,10 +2,10 @@ pub mod auth;
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::fs;
+use std::path::PathBuf;
 
-pub use auth::{AuthMethod, AuthConfig};
+pub use auth::{AuthConfig, AuthMethod};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -90,8 +90,7 @@ impl Config {
             .join("claude-helper");
 
         if !config_dir.exists() {
-            fs::create_dir_all(&config_dir)
-                .context("Failed to create config directory")?;
+            fs::create_dir_all(&config_dir).context("Failed to create config directory")?;
         }
 
         Ok(config_dir)
@@ -107,8 +106,7 @@ impl Config {
         let db_dir = Self::config_dir()?.join("db");
 
         if !db_dir.exists() {
-            fs::create_dir_all(&db_dir)
-                .context("Failed to create database directory")?;
+            fs::create_dir_all(&db_dir).context("Failed to create database directory")?;
         }
 
         Ok(db_dir)
@@ -124,11 +122,11 @@ impl Config {
         let config_file = Self::config_file()?;
 
         if config_file.exists() {
-            let contents = fs::read_to_string(&config_file)
-                .context("Failed to read config file")?;
+            let contents =
+                fs::read_to_string(&config_file).context("Failed to read config file")?;
 
-            let config: Config = toml::from_str(&contents)
-                .context("Failed to parse config file")?;
+            let config: Config =
+                toml::from_str(&contents).context("Failed to parse config file")?;
 
             Ok(config)
         } else {
@@ -142,11 +140,9 @@ impl Config {
     /// Save configuration to file
     pub async fn save(&self) -> Result<()> {
         let config_file = Self::config_file()?;
-        let contents = toml::to_string_pretty(self)
-            .context("Failed to serialize config")?;
+        let contents = toml::to_string_pretty(self).context("Failed to serialize config")?;
 
-        fs::write(&config_file, contents)
-            .context("Failed to write config file")?;
+        fs::write(&config_file, contents).context("Failed to write config file")?;
 
         Ok(())
     }

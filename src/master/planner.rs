@@ -1,8 +1,8 @@
+use super::orchestrator::{AgentSpec, ExecutionPhase, ExecutionPlan};
+use crate::agents::AgentCapability;
+use crate::config::Config;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use crate::config::Config;
-use crate::agents::AgentCapability;
-use super::orchestrator::{ExecutionPlan, ExecutionPhase, AgentSpec};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskAnalysis {
@@ -61,7 +61,11 @@ impl TaskPlanner {
     }
 
     /// Create an execution plan based on task analysis
-    pub async fn create_plan(&self, analysis: &TaskAnalysis, max_agents: usize) -> Result<ExecutionPlan> {
+    pub async fn create_plan(
+        &self,
+        analysis: &TaskAnalysis,
+        max_agents: usize,
+    ) -> Result<ExecutionPlan> {
         let mut phases = Vec::new();
 
         // Determine agent team composition based on capabilities
@@ -84,14 +88,29 @@ impl TaskPlanner {
 
         // Increase complexity based on keywords
         let high_complexity_keywords = [
-            "refactor", "migrate", "redesign", "architecture",
-            "authentication", "oauth", "security", "encryption",
-            "performance", "optimize", "scale", "distributed",
+            "refactor",
+            "migrate",
+            "redesign",
+            "architecture",
+            "authentication",
+            "oauth",
+            "security",
+            "encryption",
+            "performance",
+            "optimize",
+            "scale",
+            "distributed",
         ];
 
         let medium_complexity_keywords = [
-            "implement", "create", "build", "add feature",
-            "integration", "api", "database", "tests",
+            "implement",
+            "create",
+            "build",
+            "add feature",
+            "integration",
+            "api",
+            "database",
+            "tests",
         ];
 
         // TODO: Convert to lowercase for case-insensitive matching
@@ -124,14 +143,38 @@ impl TaskPlanner {
         let mut capabilities = Vec::new();
 
         let capability_keywords = vec![
-            (AgentCapability::CodeWriting, vec!["implement", "create", "write", "add", "build"]),
-            (AgentCapability::Testing, vec!["test", "testing", "coverage", "unit test"]),
-            (AgentCapability::Security, vec!["security", "auth", "oauth", "encryption", "vulnerability"]),
-            (AgentCapability::Documentation, vec!["document", "docs", "readme", "comments"]),
-            (AgentCapability::Debugging, vec!["debug", "fix", "bug", "error", "issue"]),
-            (AgentCapability::Performance, vec!["optimize", "performance", "speed", "efficiency"]),
-            (AgentCapability::Architecture, vec!["architecture", "design", "refactor", "structure"]),
-            (AgentCapability::Migration, vec!["migrate", "migration", "upgrade", "convert"]),
+            (
+                AgentCapability::CodeWriting,
+                vec!["implement", "create", "write", "add", "build"],
+            ),
+            (
+                AgentCapability::Testing,
+                vec!["test", "testing", "coverage", "unit test"],
+            ),
+            (
+                AgentCapability::Security,
+                vec!["security", "auth", "oauth", "encryption", "vulnerability"],
+            ),
+            (
+                AgentCapability::Documentation,
+                vec!["document", "docs", "readme", "comments"],
+            ),
+            (
+                AgentCapability::Debugging,
+                vec!["debug", "fix", "bug", "error", "issue"],
+            ),
+            (
+                AgentCapability::Performance,
+                vec!["optimize", "performance", "speed", "efficiency"],
+            ),
+            (
+                AgentCapability::Architecture,
+                vec!["architecture", "design", "refactor", "structure"],
+            ),
+            (
+                AgentCapability::Migration,
+                vec!["migrate", "migration", "upgrade", "convert"],
+            ),
         ];
 
         for (capability, keywords) in capability_keywords {
@@ -208,7 +251,8 @@ impl TaskPlanner {
                         id: format!("architect-{}", specs.len()),
                         agent_type: "Architect".to_string(),
                         capability: capability.clone(),
-                        task: "Design system architecture and create implementation plan".to_string(),
+                        task: "Design system architecture and create implementation plan"
+                            .to_string(),
                         dependencies: vec![],
                     });
                 }
@@ -243,7 +287,11 @@ impl TaskPlanner {
                             agent_type: agent_name,
                             capability: capability.clone(),
                             task: format!("Implement code changes{}", suffix),
-                            dependencies: if specs.is_empty() { vec![] } else { vec![specs[0].id.clone()] },
+                            dependencies: specs
+                                .iter()
+                                .filter(|s| s.capability == AgentCapability::Architecture)
+                                .map(|s| s.id.clone())
+                                .collect(),
                         });
                     }
                 }
@@ -254,7 +302,8 @@ impl TaskPlanner {
                         agent_type: "Security Auditor".to_string(),
                         capability: capability.clone(),
                         task: "Review code for security vulnerabilities".to_string(),
-                        dependencies: specs.iter()
+                        dependencies: specs
+                            .iter()
                             .filter(|s| s.capability == AgentCapability::CodeWriting)
                             .map(|s| s.id.clone())
                             .collect(),
@@ -267,7 +316,8 @@ impl TaskPlanner {
                         agent_type: "Test Engineer".to_string(),
                         capability: capability.clone(),
                         task: "Write comprehensive tests".to_string(),
-                        dependencies: specs.iter()
+                        dependencies: specs
+                            .iter()
                             .filter(|s| s.capability == AgentCapability::CodeWriting)
                             .map(|s| s.id.clone())
                             .collect(),
@@ -301,7 +351,11 @@ impl TaskPlanner {
         specs
     }
 
-    fn create_phases(&self, _analysis: &TaskAnalysis, specs: Vec<AgentSpec>) -> Vec<ExecutionPhase> {
+    fn create_phases(
+        &self,
+        _analysis: &TaskAnalysis,
+        specs: Vec<AgentSpec>,
+    ) -> Vec<ExecutionPhase> {
         // Build dependency graph and create phases
         let mut phases = Vec::new();
         let mut remaining_specs = specs;
@@ -320,11 +374,16 @@ impl TaskPlanner {
                     "Circular dependency detected! Remaining agents: {:?}",
                     remaining_specs.iter().map(|s| &s.id).collect::<Vec<_>>()
                 );
-                tracing::warn!("Breaking dependency cycle and executing remaining agents sequentially");
+                tracing::warn!(
+                    "Breaking dependency cycle and executing remaining agents sequentially"
+                );
                 // Execute remaining specs sequentially as fallback
                 for spec in remaining_specs {
                     phases.push(ExecutionPhase {
-                        description: format!("Phase {} (dependency cycle recovery)", phases.len() + 1),
+                        description: format!(
+                            "Phase {} (dependency cycle recovery)",
+                            phases.len() + 1
+                        ),
                         agents: vec![spec],
                         parallel: false,
                     });
@@ -333,17 +392,20 @@ impl TaskPlanner {
             }
 
             // Find specs with no unmet dependencies
-            let (ready, not_ready): (Vec<_>, Vec<_>) = remaining_specs
-                .into_iter()
-                .partition(|spec| {
-                    spec.dependencies.iter().all(|dep_id| completed_ids.contains(dep_id))
+            let (ready, not_ready): (Vec<_>, Vec<_>) =
+                remaining_specs.into_iter().partition(|spec| {
+                    spec.dependencies
+                        .iter()
+                        .all(|dep_id| completed_ids.contains(dep_id))
                 });
 
             if ready.is_empty() {
                 // Circular dependency detected - log detailed warning
-                let unmet_deps: Vec<String> = not_ready.iter()
+                let unmet_deps: Vec<String> = not_ready
+                    .iter()
                     .flat_map(|spec| {
-                        spec.dependencies.iter()
+                        spec.dependencies
+                            .iter()
                             .filter(|dep| !completed_ids.contains(dep))
                             .map(|d| format!("{} -> {}", spec.id, d))
                     })
@@ -357,7 +419,10 @@ impl TaskPlanner {
 
                 // Add remaining as final phase with warning
                 phases.push(ExecutionPhase {
-                    description: format!("Phase {} (circular dependency fallback)", phases.len() + 1),
+                    description: format!(
+                        "Phase {} (circular dependency fallback)",
+                        phases.len() + 1
+                    ),
                     agents: not_ready,
                     parallel: false,
                 });
@@ -365,8 +430,8 @@ impl TaskPlanner {
             }
 
             // Check if these can run in parallel (no dependencies on each other)
-            let can_parallel = ready.len() > 1 &&
-                ready.iter().all(|spec1| {
+            let can_parallel = ready.len() > 1
+                && ready.iter().all(|spec1| {
                     ready.iter().all(|spec2| {
                         spec1.id == spec2.id || !spec2.dependencies.contains(&spec1.id)
                     })
@@ -512,9 +577,8 @@ mod tests {
     #[test]
     fn test_detect_capabilities_multiple_keywords() {
         let planner = create_test_planner();
-        let capabilities = planner.detect_capabilities(
-            "implement authentication with security audit and tests"
-        );
+        let capabilities =
+            planner.detect_capabilities("implement authentication with security audit and tests");
         // Should detect CodeWriting, Security, and Testing
         assert!(capabilities.contains(&AgentCapability::CodeWriting));
         assert!(capabilities.contains(&AgentCapability::Security));
@@ -929,16 +993,41 @@ mod tests {
 
         // Complex graph with multiple paths
         let specs = vec![
-            AgentSpec { id: "A".to_string(), agent_type: "a".to_string(),
-                capability: AgentCapability::Architecture, task: "a".to_string(), dependencies: vec![] },
-            AgentSpec { id: "B".to_string(), agent_type: "b".to_string(),
-                capability: AgentCapability::CodeWriting, task: "b".to_string(), dependencies: vec!["A".to_string()] },
-            AgentSpec { id: "C".to_string(), agent_type: "c".to_string(),
-                capability: AgentCapability::CodeWriting, task: "c".to_string(), dependencies: vec!["A".to_string()] },
-            AgentSpec { id: "D".to_string(), agent_type: "d".to_string(),
-                capability: AgentCapability::Testing, task: "d".to_string(), dependencies: vec!["B".to_string()] },
-            AgentSpec { id: "E".to_string(), agent_type: "e".to_string(),
-                capability: AgentCapability::Documentation, task: "e".to_string(), dependencies: vec!["C".to_string()] },
+            AgentSpec {
+                id: "A".to_string(),
+                agent_type: "a".to_string(),
+                capability: AgentCapability::Architecture,
+                task: "a".to_string(),
+                dependencies: vec![],
+            },
+            AgentSpec {
+                id: "B".to_string(),
+                agent_type: "b".to_string(),
+                capability: AgentCapability::CodeWriting,
+                task: "b".to_string(),
+                dependencies: vec!["A".to_string()],
+            },
+            AgentSpec {
+                id: "C".to_string(),
+                agent_type: "c".to_string(),
+                capability: AgentCapability::CodeWriting,
+                task: "c".to_string(),
+                dependencies: vec!["A".to_string()],
+            },
+            AgentSpec {
+                id: "D".to_string(),
+                agent_type: "d".to_string(),
+                capability: AgentCapability::Testing,
+                task: "d".to_string(),
+                dependencies: vec!["B".to_string()],
+            },
+            AgentSpec {
+                id: "E".to_string(),
+                agent_type: "e".to_string(),
+                capability: AgentCapability::Documentation,
+                task: "e".to_string(),
+                dependencies: vec!["C".to_string()],
+            },
         ];
 
         let original_count = specs.len();
@@ -949,7 +1038,8 @@ mod tests {
         assert_eq!(total_agents, original_count);
 
         // Verify no duplicates
-        let mut all_ids: Vec<String> = phases.iter()
+        let mut all_ids: Vec<String> = phases
+            .iter()
             .flat_map(|p| p.agents.iter().map(|a| a.id.clone()))
             .collect();
         all_ids.sort();

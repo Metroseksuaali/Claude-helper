@@ -1,7 +1,7 @@
-use anyhow::Result;
-use crate::config::Config;
-use crate::agents::{Agent, ClaudeAgent, AgentCapability};
 use super::orchestrator::ExecutionPlan;
+use crate::agents::{Agent, AgentCapability, ClaudeAgent};
+use crate::config::Config;
+use anyhow::Result;
 
 pub struct AgentFactory {
     config: Config,
@@ -18,12 +18,9 @@ impl AgentFactory {
 
         for phase in &plan.phases {
             for spec in &phase.agents {
-                let agent = self.create_agent(
-                    &spec.id,
-                    &spec.agent_type,
-                    &spec.capability,
-                    &spec.task,
-                ).await?;
+                let agent = self
+                    .create_agent(&spec.id, &spec.agent_type, &spec.capability, &spec.task)
+                    .await?;
 
                 agents.push(agent);
             }
@@ -49,7 +46,8 @@ impl AgentFactory {
             capability.clone(),
             system_prompt,
             self.config.clone(),
-        ).await?;
+        )
+        .await?;
 
         Ok(Box::new(agent))
     }

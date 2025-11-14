@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use anyhow::{Context, Result};
-use std::path::PathBuf;
+use serde::{Deserialize, Serialize};
 use std::fs;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -48,20 +48,17 @@ impl AuthConfig {
     /// Get authentication token
     pub async fn get_token(&self) -> Result<String> {
         match &self.method {
-            AuthMethod::ClaudeCode => {
-                self.get_claude_code_token().await
-            }
-            AuthMethod::ApiKey => {
-                self.api_key.clone()
-                    .context("API key not configured")
-            }
+            AuthMethod::ClaudeCode => self.get_claude_code_token().await,
+            AuthMethod::ApiKey => self.api_key.clone().context("API key not configured"),
         }
     }
 
     /// Get token from Claude Code session
     async fn get_claude_code_token(&self) -> Result<String> {
         // Try to read session cookie from Claude Code
-        let session_path = self.claude_code_session_path.clone()
+        let session_path = self
+            .claude_code_session_path
+            .clone()
             .or_else(Self::default_session_path)
             .context("Could not determine Claude Code session path")?;
 

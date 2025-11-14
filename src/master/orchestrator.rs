@@ -1,12 +1,12 @@
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
-use std::time::Instant;
-use crate::config::Config;
-use crate::agents::{Agent, AgentCapability};
 use super::AutonomyMode;
+use crate::agents::{Agent, AgentCapability};
+use crate::config::Config;
+use anyhow::Result;
 use colored::Colorize;
-use indicatif::{ProgressBar, MultiProgress, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use std::time::Instant;
 use tokio::sync::Semaphore;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,11 +80,17 @@ impl Orchestrator {
         let multi_progress = MultiProgress::new();
 
         for (phase_num, phase) in plan.phases.iter().enumerate() {
-            println!("\n{} Phase {}/{}: {}",
-                     if phase.parallel { "⚡".bright_yellow() } else { "→".bright_cyan() },
-                     phase_num + 1,
-                     plan.phases.len(),
-                     phase.description.bright_white().bold());
+            println!(
+                "\n{} Phase {}/{}: {}",
+                if phase.parallel {
+                    "⚡".bright_yellow()
+                } else {
+                    "→".bright_cyan()
+                },
+                phase_num + 1,
+                plan.phases.len(),
+                phase.description.bright_white().bold()
+            );
 
             // Get user approval if needed
             if self.needs_approval_for_phase(phase_num, plan.phases.len()) {
@@ -96,9 +102,11 @@ impl Orchestrator {
 
             // Execute agents in this phase
             let phase_result = if phase.parallel {
-                self.execute_parallel(phase, &mut agents, &multi_progress).await?
+                self.execute_parallel(phase, &mut agents, &multi_progress)
+                    .await?
             } else {
-                self.execute_sequential(phase, &mut agents, &multi_progress).await?
+                self.execute_sequential(phase, &mut agents, &multi_progress)
+                    .await?
             };
 
             total_tokens += phase_result.tokens_used;
@@ -108,7 +116,10 @@ impl Orchestrator {
 
             if !phase_result.success && phase_result.critical {
                 // Critical failure, stop execution
-                errors.push(format!("Critical failure in phase {}, stopping execution", phase_num + 1));
+                errors.push(format!(
+                    "Critical failure in phase {}, stopping execution",
+                    phase_num + 1
+                ));
                 break;
             }
         }
@@ -152,7 +163,7 @@ impl Orchestrator {
                     ProgressStyle::default_bar()
                         .template("  {spinner:.cyan} [{bar:40.cyan/blue}] {msg}")
                         .unwrap()
-                        .progress_chars("=>-")
+                        .progress_chars("=>-"),
                 );
                 pb.set_message(format!("{}: Starting...", spec.agent_type));
 
@@ -171,14 +182,14 @@ impl Orchestrator {
                     match result {
                         Ok(agent_result) => {
                             pb.set_position(100);
-                            pb.finish_with_message(format!("{}: ✓ Complete ({} tokens)",
-                                                           spec_clone.agent_type,
-                                                           agent_result.tokens_used));
+                            pb.finish_with_message(format!(
+                                "{}: ✓ Complete ({} tokens)",
+                                spec_clone.agent_type, agent_result.tokens_used
+                            ));
                             Ok((agent_result.tokens_used, None))
                         }
                         Err(e) => {
-                            pb.finish_with_message(format!("{}: ✗ Failed",
-                                                           spec_clone.agent_type));
+                            pb.finish_with_message(format!("{}: ✗ Failed", spec_clone.agent_type));
                             Ok((0, Some(format!("{} failed: {}", spec_clone.agent_type, e))))
                         }
                     }
@@ -239,7 +250,7 @@ impl Orchestrator {
                     ProgressStyle::default_bar()
                         .template("  {spinner:.cyan} [{bar:40.cyan/blue}] {msg}")
                         .unwrap()
-                        .progress_chars("=>-")
+                        .progress_chars("=>-"),
                 );
                 pb.set_message(format!("{}: Starting...", spec.agent_type));
 
@@ -251,9 +262,10 @@ impl Orchestrator {
                         tokens_used += result.tokens_used;
                         completed += 1;
                         pb.set_position(100);
-                        pb.finish_with_message(format!("{}: ✓ Complete ({} tokens)",
-                                                       spec.agent_type,
-                                                       result.tokens_used));
+                        pb.finish_with_message(format!(
+                            "{}: ✓ Complete ({} tokens)",
+                            spec.agent_type, result.tokens_used
+                        ));
                     }
                     Err(e) => {
                         pb.finish_with_message(format!("{}: ✗ Failed", spec.agent_type));

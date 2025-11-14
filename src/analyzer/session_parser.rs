@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionData {
@@ -49,9 +49,7 @@ impl SessionParser {
 
         let mut sessions = Vec::new();
 
-        for entry in fs::read_dir(&sessions_dir)
-            .context("Failed to read sessions directory")?
-        {
+        for entry in fs::read_dir(&sessions_dir).context("Failed to read sessions directory")? {
             let entry = entry?;
             let path = entry.path();
 
@@ -61,11 +59,7 @@ impl SessionParser {
         }
 
         // Sort by modification time (newest first)
-        sessions.sort_by_key(|path| {
-            fs::metadata(path)
-                .and_then(|m| m.modified())
-                .ok()
-        });
+        sessions.sort_by_key(|path| fs::metadata(path).and_then(|m| m.modified()).ok());
         sessions.reverse();
 
         Ok(sessions.into_iter().take(count).collect())
@@ -85,8 +79,7 @@ impl SessionParser {
 
     /// Parse a session file
     pub fn parse_session(&self, path: &Path) -> Result<SessionData> {
-        let content = fs::read_to_string(path)
-            .context("Failed to read session file")?;
+        let content = fs::read_to_string(path).context("Failed to read session file")?;
 
         let mut messages = Vec::new();
         let mut tool_calls = Vec::new();
@@ -98,8 +91,8 @@ impl SessionParser {
                 continue;
             }
 
-            let json: serde_json::Value = serde_json::from_str(line)
-                .context("Failed to parse JSON line")?;
+            let json: serde_json::Value =
+                serde_json::from_str(line).context("Failed to parse JSON line")?;
 
             // Extract messages
             if let Some(role) = json.get("role").and_then(|r| r.as_str()) {
@@ -107,7 +100,10 @@ impl SessionParser {
                     messages.push(Message {
                         role: role.to_string(),
                         content: content.to_string(),
-                        timestamp: json.get("timestamp").and_then(|t| t.as_str()).map(|s| s.to_string()),
+                        timestamp: json
+                            .get("timestamp")
+                            .and_then(|t| t.as_str())
+                            .map(|s| s.to_string()),
                     });
                 }
             }
@@ -117,13 +113,20 @@ impl SessionParser {
                 if let Some(name) = tool_use.get("name").and_then(|n| n.as_str()) {
                     tool_calls.push(ToolCall {
                         tool_name: name.to_string(),
-                        parameters: tool_use.get("input").cloned().unwrap_or(serde_json::Value::Null),
-                        timestamp: json.get("timestamp").and_then(|t| t.as_str()).map(|s| s.to_string()),
+                        parameters: tool_use
+                            .get("input")
+                            .cloned()
+                            .unwrap_or(serde_json::Value::Null),
+                        timestamp: json
+                            .get("timestamp")
+                            .and_then(|t| t.as_str())
+                            .map(|s| s.to_string()),
                     });
 
                     // Track file accesses
                     if name == "Read" || name == "Write" || name == "Edit" {
-                        if let Some(file_path) = tool_use.get("input")
+                        if let Some(file_path) = tool_use
+                            .get("input")
                             .and_then(|i| i.get("file_path"))
                             .and_then(|fp| fp.as_str())
                         {
@@ -138,7 +141,8 @@ impl SessionParser {
             }
         }
 
-        let session_id = path.file_stem()
+        let session_id = path
+            .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("unknown")
             .to_string();
@@ -152,8 +156,7 @@ impl SessionParser {
     }
 
     fn get_sessions_dir(&self) -> Result<PathBuf> {
-        let home = dirs::home_dir()
-            .context("Could not find home directory")?;
+        let home = dirs::home_dir().context("Could not find home directory")?;
 
         Ok(home.join(".claude").join("sessions"))
     }

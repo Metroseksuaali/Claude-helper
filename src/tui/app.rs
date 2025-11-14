@@ -1,17 +1,17 @@
-use anyhow::Result;
-use crate::config::Config;
-use crate::statusline::StatusLine;
 use crate::analyzer::SessionAnalyzer;
+use crate::config::Config;
 use crate::db::Database;
+use crate::statusline::StatusLine;
+use anyhow::Result;
+use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Tabs, List, ListItem},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs},
     Frame, Terminal,
 };
-use crossterm::event::{self, Event, KeyCode};
 use std::time::Duration;
 
 enum AppTab {
@@ -57,10 +57,10 @@ impl App {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([
-                    Constraint::Length(3),  // Title
-                    Constraint::Length(3),  // Tabs
-                    Constraint::Min(0),     // Content
-                    Constraint::Length(3),  // Footer
+                    Constraint::Length(3), // Title
+                    Constraint::Length(3), // Tabs
+                    Constraint::Min(0),    // Content
+                    Constraint::Length(3), // Footer
                 ])
                 .split(f.area());
 
@@ -75,7 +75,11 @@ impl App {
 
     fn render_title(&self, f: &mut Frame, area: Rect) {
         let title = Paragraph::new("Claude Helper - Interactive Dashboard")
-            .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+            .style(
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD),
+            )
             .block(Block::default().borders(Borders::ALL));
 
         f.render_widget(title, area);
@@ -92,7 +96,11 @@ impl App {
         let tabs = Tabs::new(titles)
             .select(index)
             .style(Style::default().fg(Color::White))
-            .highlight_style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+            .highlight_style(
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )
             .block(Block::default().borders(Borders::ALL).title("Tabs"));
 
         f.render_widget(tabs, area);
@@ -110,12 +118,18 @@ impl App {
         // This would fetch real usage data
         let text = vec![
             Line::from(""),
-            Line::from(Span::styled("Token Usage", Style::default().add_modifier(Modifier::BOLD))),
+            Line::from(Span::styled(
+                "Token Usage",
+                Style::default().add_modifier(Modifier::BOLD),
+            )),
             Line::from(""),
             Line::from("5-Hour Block: ████████████░░░░ 70% (14k/20k)"),
             Line::from("7-Day Total:  █████████░░░░░░░ 65% (130k/200k)"),
             Line::from(""),
-            Line::from(Span::styled("Cost Information", Style::default().add_modifier(Modifier::BOLD))),
+            Line::from(Span::styled(
+                "Cost Information",
+                Style::default().add_modifier(Modifier::BOLD),
+            )),
             Line::from(""),
             Line::from("Burn rate: $0.15/hour"),
             Line::from("Estimated 7-day cost: $1.17"),
@@ -123,8 +137,11 @@ impl App {
             Line::from("Press 'r' to refresh"),
         ];
 
-        let paragraph = Paragraph::new(text)
-            .block(Block::default().borders(Borders::ALL).title("Usage Statistics"));
+        let paragraph = Paragraph::new(text).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Usage Statistics"),
+        );
 
         f.render_widget(paragraph, area);
     }
@@ -140,8 +157,11 @@ impl App {
             ListItem::new("Press 'Enter' to view details"),
         ];
 
-        let list = List::new(items)
-            .block(Block::default().borders(Borders::ALL).title("Optimization Suggestions"));
+        let list = List::new(items).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Optimization Suggestions"),
+        );
 
         f.render_widget(list, area);
     }
@@ -156,8 +176,11 @@ impl App {
             ListItem::new("Scroll with ↑↓ arrows"),
         ];
 
-        let list = List::new(items)
-            .block(Block::default().borders(Borders::ALL).title("Recent Agent Executions"));
+        let list = List::new(items).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Recent Agent Executions"),
+        );
 
         f.render_widget(list, area);
     }
@@ -172,8 +195,8 @@ impl App {
             Span::styled("r", Style::default().fg(Color::Yellow)),
         ]);
 
-        let paragraph = Paragraph::new(text)
-            .block(Block::default().borders(Borders::ALL).title("Controls"));
+        let paragraph =
+            Paragraph::new(text).block(Block::default().borders(Borders::ALL).title("Controls"));
 
         f.render_widget(paragraph, area);
     }

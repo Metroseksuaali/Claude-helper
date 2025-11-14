@@ -1,12 +1,12 @@
 mod schema;
 
-use anyhow::{Context, Result};
-use sqlx::{SqlitePool, sqlite::SqlitePoolOptions};
-use crate::config::Config;
-use crate::master::planner::TaskAnalysis;
-use crate::master::orchestrator::{ExecutionPlan, ExecutionResult};
 use crate::agents::AgentCapability;
+use crate::config::Config;
+use crate::master::orchestrator::{ExecutionPlan, ExecutionResult};
+use crate::master::planner::TaskAnalysis;
+use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
+use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 
 pub use schema::*;
 
@@ -30,8 +30,9 @@ impl Database {
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
             .connect_with(
-                db_url.parse::<sqlx::sqlite::SqliteConnectOptions>()?
-                    .create_if_missing(true)
+                db_url
+                    .parse::<sqlx::sqlite::SqliteConnectOptions>()?
+                    .create_if_missing(true),
             )
             .await
             .context("Failed to connect to database")?;
@@ -96,21 +97,28 @@ impl Database {
             .fetch_one(&self.pool)
             .await?;
 
-        let successful: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_executions WHERE success = 1")
-            .fetch_one(&self.pool)
-            .await?;
+        let successful: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM agent_executions WHERE success = 1")
+                .fetch_one(&self.pool)
+                .await?;
 
-        let total_tokens: i64 = sqlx::query_scalar("SELECT COALESCE(SUM(tokens_used), 0) FROM agent_executions")
-            .fetch_one(&self.pool)
-            .await?;
+        let total_tokens: i64 =
+            sqlx::query_scalar("SELECT COALESCE(SUM(tokens_used), 0) FROM agent_executions")
+                .fetch_one(&self.pool)
+                .await?;
 
-        let total_time: f64 = sqlx::query_scalar("SELECT COALESCE(SUM(execution_time_ms), 0) FROM agent_executions")
-            .fetch_one(&self.pool)
-            .await
-            .map(|ms: i64| ms as f64 / 1000.0)?;
+        let total_time: f64 =
+            sqlx::query_scalar("SELECT COALESCE(SUM(execution_time_ms), 0) FROM agent_executions")
+                .fetch_one(&self.pool)
+                .await
+                .map(|ms: i64| ms as f64 / 1000.0)?;
 
         let avg_tokens = if total > 0 { total_tokens / total } else { 0 };
-        let avg_time = if total > 0 { total_time / total as f64 } else { 0.0 };
+        let avg_time = if total > 0 {
+            total_time / total as f64
+        } else {
+            0.0
+        };
 
         // Get capability breakdown
         let by_capability = std::collections::HashMap::new();
@@ -134,7 +142,7 @@ impl Database {
             "SELECT agent_id, agent_type, task, tokens_used, execution_time_ms, success, created_at
              FROM agent_executions
              ORDER BY created_at DESC
-             LIMIT ?"
+             LIMIT ?",
         )
         .bind(limit as i64)
         .fetch_all(&self.pool)
@@ -217,9 +225,10 @@ impl Database {
 
         let mut breakdown = Vec::new();
         for row in rows {
-            let timestamp = DateTime::parse_from_str(&format!("{} +0000", row.0), "%Y-%m-%d %H:%M:%S %z")
-                .unwrap_or_else(|_| Utc::now().into())
-                .with_timezone(&Utc);
+            let timestamp =
+                DateTime::parse_from_str(&format!("{} +0000", row.0), "%Y-%m-%d %H:%M:%S %z")
+                    .unwrap_or_else(|_| Utc::now().into())
+                    .with_timezone(&Utc);
 
             breakdown.push(HourlyBreakdown {
                 hour: timestamp,
@@ -237,7 +246,7 @@ impl Database {
             "SELECT id, task_description, actual_tokens, success, created_at
              FROM task_executions
              ORDER BY created_at DESC
-             LIMIT ?"
+             LIMIT ?",
         )
         .bind(limit as i64)
         .fetch_all(&self.pool)

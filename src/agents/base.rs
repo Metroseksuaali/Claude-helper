@@ -1,7 +1,7 @@
+use super::AgentCapability;
 use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use super::AgentCapability;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentResult {

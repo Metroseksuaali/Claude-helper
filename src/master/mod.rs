@@ -1,18 +1,18 @@
+mod agent_factory;
 pub mod orchestrator;
 pub mod planner;
-mod agent_factory;
 
-use anyhow::Result;
-use crate::config::Config;
 use crate::agents::AgentCapability;
+use crate::config::Config;
 use crate::db::Database;
-use orchestrator::Orchestrator;
-use planner::TaskPlanner;
 use agent_factory::AgentFactory;
+use anyhow::Result;
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
+use orchestrator::Orchestrator;
+use planner::TaskPlanner;
 
-pub use orchestrator::{ExecutionPlan, ExecutionPhase};
+pub use orchestrator::{ExecutionPhase, ExecutionPlan};
 pub use planner::TaskAnalysis;
 
 /// Autonomy mode for Master Coder
@@ -83,16 +83,26 @@ impl MasterCoder {
 
     /// Execute a task with agent orchestration
     pub async fn execute(&mut self, task: &str) -> Result<()> {
-        println!("\n{}", "═══════════════════════════════════════════════════════".bright_cyan());
-        println!("{} {}", "Master Coder".bright_cyan().bold(), "Analyzing task...".white());
-        println!("{}", "═══════════════════════════════════════════════════════".bright_cyan());
+        println!(
+            "\n{}",
+            "═══════════════════════════════════════════════════════".bright_cyan()
+        );
+        println!(
+            "{} {}",
+            "Master Coder".bright_cyan().bold(),
+            "Analyzing task...".white()
+        );
+        println!(
+            "{}",
+            "═══════════════════════════════════════════════════════".bright_cyan()
+        );
 
         // Step 1: Analyze the task
         let spinner = ProgressBar::new_spinner();
         spinner.set_style(
             ProgressStyle::default_spinner()
                 .template("{spinner:.cyan} {msg}")
-                .unwrap()
+                .unwrap(),
         );
         spinner.set_message("Analyzing task complexity and requirements...");
 
@@ -102,7 +112,10 @@ impl MasterCoder {
         self.print_analysis(&analysis);
 
         // Step 2: Create execution plan
-        println!("\n{}", "Creating agent team and execution plan...".bright_yellow());
+        println!(
+            "\n{}",
+            "Creating agent team and execution plan...".bright_yellow()
+        );
 
         let plan = self.planner.create_plan(&analysis, self.max_agents).await?;
 
@@ -122,14 +135,21 @@ impl MasterCoder {
         println!("\n{} {} agents created", "✓".green(), agents.len());
 
         // Step 5: Execute the plan
-        println!("\n{}", "═══════════════════════════════════════════════════════".bright_cyan());
+        println!(
+            "\n{}",
+            "═══════════════════════════════════════════════════════".bright_cyan()
+        );
         println!("{}", "Executing plan...".bright_cyan().bold());
-        println!("{}", "═══════════════════════════════════════════════════════".bright_cyan());
+        println!(
+            "{}",
+            "═══════════════════════════════════════════════════════".bright_cyan()
+        );
 
         let result = self.orchestrator.execute_plan(&plan, agents).await?;
 
         // Step 6: Save to database for learning
-        self.save_execution(&task, &analysis, &plan, &result).await?;
+        self.save_execution(&task, &analysis, &plan, &result)
+            .await?;
 
         // Step 7: Show results
         self.print_results(&result)?;
@@ -139,12 +159,32 @@ impl MasterCoder {
 
     fn print_analysis(&self, analysis: &TaskAnalysis) {
         println!("\n{}", "Task Analysis:".bright_yellow().bold());
-        println!("  {} {}", "Complexity:".white(), self.format_complexity(analysis.complexity));
-        println!("  {} {}", "Estimated files:".white(), analysis.estimated_files);
-        println!("  {} {:?}", "Required expertise:".white(), analysis.required_capabilities);
-        println!("  {} ~{}", "Estimated tokens:".white(), analysis.estimated_tokens);
-        println!("  {} {}-{} minutes", "Estimated time:".white(),
-                 analysis.estimated_time_min, analysis.estimated_time_max);
+        println!(
+            "  {} {}",
+            "Complexity:".white(),
+            self.format_complexity(analysis.complexity)
+        );
+        println!(
+            "  {} {}",
+            "Estimated files:".white(),
+            analysis.estimated_files
+        );
+        println!(
+            "  {} {:?}",
+            "Required expertise:".white(),
+            analysis.required_capabilities
+        );
+        println!(
+            "  {} ~{}",
+            "Estimated tokens:".white(),
+            analysis.estimated_tokens
+        );
+        println!(
+            "  {} {}-{} minutes",
+            "Estimated time:".white(),
+            analysis.estimated_time_min,
+            analysis.estimated_time_max
+        );
     }
 
     fn format_complexity(&self, complexity: u8) -> String {
@@ -167,21 +207,29 @@ impl MasterCoder {
     fn print_plan(&self, plan: &ExecutionPlan) -> Result<()> {
         println!("\n{}", "Execution Plan:".bright_yellow().bold());
         println!("  {} {} phases", "Total phases:".white(), plan.phases.len());
-        println!("  {} {} agents", "Total agents:".white(), plan.total_agents());
+        println!(
+            "  {} {} agents",
+            "Total agents:".white(),
+            plan.total_agents()
+        );
         println!("  {} {}", "Token budget:".white(), self.token_budget);
 
         for (i, phase) in plan.phases.iter().enumerate() {
-            println!("\n  {} Phase {}/{}: {}",
-                     if phase.parallel { "⚡" } else { "→" },
-                     i + 1,
-                     plan.phases.len(),
-                     phase.description);
+            println!(
+                "\n  {} Phase {}/{}: {}",
+                if phase.parallel { "⚡" } else { "→" },
+                i + 1,
+                plan.phases.len(),
+                phase.description
+            );
 
             for agent_spec in &phase.agents {
-                println!("    {} {} - {}",
-                         "•".bright_cyan(),
-                         agent_spec.agent_type,
-                         agent_spec.task);
+                println!(
+                    "    {} {} - {}",
+                    "•".bright_cyan(),
+                    agent_spec.agent_type,
+                    agent_spec.task
+                );
             }
         }
 
@@ -211,22 +259,45 @@ impl MasterCoder {
         result: &orchestrator::ExecutionResult,
     ) -> Result<()> {
         if self.config.master_coder.enable_learning {
-            self.db.save_task_execution(task, analysis, plan, result).await?;
+            self.db
+                .save_task_execution(task, analysis, plan, result)
+                .await?;
         }
         Ok(())
     }
 
     fn print_results(&self, result: &orchestrator::ExecutionResult) -> Result<()> {
-        println!("\n{}", "═══════════════════════════════════════════════════════".bright_green());
+        println!(
+            "\n{}",
+            "═══════════════════════════════════════════════════════".bright_green()
+        );
         println!("{}", "Execution Complete!".bright_green().bold());
-        println!("{}", "═══════════════════════════════════════════════════════".bright_green());
+        println!(
+            "{}",
+            "═══════════════════════════════════════════════════════".bright_green()
+        );
 
         println!("\n{}", "Summary:".bright_yellow().bold());
-        println!("  {} {}", "Status:".white(),
-                 if result.success { "Success ✓".green() } else { "Failed ✗".red() });
-        println!("  {} {}", "Agents executed:".white(), result.agents_executed);
+        println!(
+            "  {} {}",
+            "Status:".white(),
+            if result.success {
+                "Success ✓".green()
+            } else {
+                "Failed ✗".red()
+            }
+        );
+        println!(
+            "  {} {}",
+            "Agents executed:".white(),
+            result.agents_executed
+        );
         println!("  {} {}", "Total tokens used:".white(), result.tokens_used);
-        println!("  {} {:.2}s", "Total time:".white(), result.execution_time_secs);
+        println!(
+            "  {} {:.2}s",
+            "Total time:".white(),
+            result.execution_time_secs
+        );
 
         if !result.errors.is_empty() {
             println!("\n{}", "Errors:".red().bold());
