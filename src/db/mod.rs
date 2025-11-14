@@ -174,19 +174,23 @@ impl Database {
 
     /// Get hourly token usage breakdown
     pub async fn get_hourly_breakdown(&self, hours: usize) -> Result<Vec<HourlyBreakdown>> {
-        let query = format!(
-            "SELECT
+        // Security: Use parameterized query to prevent SQL injection
+        // Calculate threshold datetime in Rust instead of using string interpolation
+        let hours_i64 = hours as i64;
+        let threshold = Utc::now() - chrono::Duration::hours(hours_i64);
+        let threshold_str = threshold.format("%Y-%m-%d %H:%M:%S").to_string();
+
+        let query = "SELECT
                 strftime('%Y-%m-%d %H:00:00', created_at) as hour,
                 COUNT(*) as task_count,
                 COALESCE(SUM(tokens_used), 0) as total_tokens
              FROM agent_executions
-             WHERE datetime(created_at) >= datetime('now', '-{} hours')
+             WHERE datetime(created_at) >= datetime(?)
              GROUP BY hour
-             ORDER BY hour DESC",
-            hours
-        );
+             ORDER BY hour DESC";
 
-        let rows = sqlx::query_as::<_, (String, i64, i64)>(&query)
+        let rows = sqlx::query_as::<_, (String, i64, i64)>(query)
+            .bind(&threshold_str)
             .fetch_all(&self.pool)
             .await?;
 

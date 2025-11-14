@@ -295,7 +295,31 @@ impl TaskPlanner {
         let mut remaining_specs = specs;
         let mut completed_ids: Vec<String> = Vec::new();
 
+        // Security: Prevent infinite loops from circular dependencies
+        let max_iterations = remaining_specs.len() * 2; // Reasonable upper bound
+        let mut iteration_count = 0;
+
         while !remaining_specs.is_empty() {
+            iteration_count += 1;
+
+            // Detect potential infinite loop from circular dependencies
+            if iteration_count > max_iterations {
+                tracing::error!(
+                    "Circular dependency detected! Remaining agents: {:?}",
+                    remaining_specs.iter().map(|s| &s.id).collect::<Vec<_>>()
+                );
+                tracing::warn!("Breaking dependency cycle and executing remaining agents sequentially");
+                // Execute remaining specs sequentially as fallback
+                for spec in remaining_specs {
+                    phases.push(ExecutionPhase {
+                        description: format!("Phase {} (dependency cycle recovery)", phases.len() + 1),
+                        agents: vec![spec],
+                        parallel: false,
+                    });
+                }
+                break;
+            }
+
             // Find specs with no unmet dependencies
             let (ready, not_ready): (Vec<_>, Vec<_>) = remaining_specs
                 .into_iter()
@@ -304,9 +328,24 @@ impl TaskPlanner {
                 });
 
             if ready.is_empty() {
-                // Circular dependency or error - just add remaining as final phase
+                // Circular dependency detected - log detailed warning
+                let unmet_deps: Vec<String> = not_ready.iter()
+                    .flat_map(|spec| {
+                        spec.dependencies.iter()
+                            .filter(|dep| !completed_ids.contains(dep))
+                            .map(|d| format!("{} -> {}", spec.id, d))
+                    })
+                    .collect();
+
+                tracing::error!(
+                    "Circular dependency detected! Unmet dependencies: {:?}",
+                    unmet_deps
+                );
+                tracing::warn!("Executing remaining agents in arbitrary order as fallback");
+
+                // Add remaining as final phase with warning
                 phases.push(ExecutionPhase {
-                    description: format!("Phase {} (remaining)", phases.len() + 1),
+                    description: format!("Phase {} (circular dependency fallback)", phases.len() + 1),
                     agents: not_ready,
                     parallel: false,
                 });
