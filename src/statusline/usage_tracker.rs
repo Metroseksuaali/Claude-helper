@@ -86,7 +86,17 @@ impl UsageTracker {
         Ok(self.convert_response(usage_response))
     }
 
+    // TODO: Add tests for convert_response():
+    // - Test percentage calculation (0%, 50%, 100%)
+    // - Test division by zero when limit is 0
+    // - Test burn rate calculation accuracy
+    // - Test cost calculation with known values
+    // - Test with zero usage
+    // - Test with usage exceeding limit (should it cap at 100%?)
+    // - Test percentage overflow (255+)
+    // - Test floating point precision issues
     fn convert_response(&self, response: ClaudeUsageResponse) -> Usage {
+        // TODO: Add validation - handle limit == 0 to prevent division by zero
         let five_hour_percent = ((response.usage.five_hour.used as f64 / response.usage.five_hour.limit as f64) * 100.0) as u8;
         let seven_day_percent = ((response.usage.seven_day.used as f64 / response.usage.seven_day.limit as f64) * 100.0) as u8;
 
@@ -96,6 +106,7 @@ impl UsageTracker {
         // Estimate cost (this would use actual pricing from LiteLLM or similar)
         // Using rough estimate: $3 per million input tokens, $15 per million output tokens
         // Assuming 50/50 split for simplicity
+        // TODO: Use actual input/output token split for accurate cost calculation
         let avg_cost_per_million = 9.0; // Average of input and output
         let burn_rate_cost = (burn_rate_tokens / 1_000_000.0) * avg_cost_per_million;
 

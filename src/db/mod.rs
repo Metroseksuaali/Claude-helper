@@ -15,6 +15,13 @@ pub struct Database {
 }
 
 impl Database {
+    // TODO: Add tests for Database::new():
+    // - Test successful initialization
+    // - Test with invalid path (permission denied)
+    // - Test with corrupted database file
+    // - Test schema migration on existing database
+    // - Test concurrent database initialization
+
     pub async fn new(_config: &Config) -> Result<Self> {
         let db_path = Config::db_file()?;
         let db_url = format!("sqlite://{}", db_path.display());
@@ -39,6 +46,13 @@ impl Database {
     }
 
     /// Save a task execution for learning
+    // TODO: Add tests for save_task_execution():
+    // - Test successful save and verify data integrity
+    // - Test with extremely long task description (>10000 chars)
+    // - Test with special characters and Unicode
+    // - Test with invalid JSON in analysis/plan
+    // - Test concurrent saves (race conditions)
+    // - Test transaction rollback on error
     pub async fn save_task_execution(
         &self,
         task: &str,
@@ -70,6 +84,13 @@ impl Database {
     }
 
     /// Get agent statistics
+    // TODO: Add tests for get_agent_stats():
+    // - Test with empty database (division by zero)
+    // - Test with single record
+    // - Test with large dataset (1000+ records)
+    // - Test aggregation accuracy
+    // - Test with NULL values in tokens_used
+    // - Test with negative values (should never happen but handle gracefully)
     pub async fn get_agent_stats(&self) -> Result<AgentStats> {
         let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_executions")
             .fetch_one(&self.pool)
@@ -174,19 +195,23 @@ impl Database {
 
     /// Get hourly token usage breakdown
     pub async fn get_hourly_breakdown(&self, hours: usize) -> Result<Vec<HourlyBreakdown>> {
-        let query = format!(
-            "SELECT
+        // Security: Use parameterized query to prevent SQL injection
+        // Calculate threshold datetime in Rust instead of using string interpolation
+        let hours_i64 = hours as i64;
+        let threshold = Utc::now() - chrono::Duration::hours(hours_i64);
+        let threshold_str = threshold.format("%Y-%m-%d %H:%M:%S").to_string();
+
+        let query = "SELECT
                 strftime('%Y-%m-%d %H:00:00', created_at) as hour,
                 COUNT(*) as task_count,
                 COALESCE(SUM(tokens_used), 0) as total_tokens
              FROM agent_executions
-             WHERE datetime(created_at) >= datetime('now', '-{} hours')
+             WHERE datetime(created_at) >= datetime(?)
              GROUP BY hour
-             ORDER BY hour DESC",
-            hours
-        );
+             ORDER BY hour DESC";
 
-        let rows = sqlx::query_as::<_, (String, i64, i64)>(&query)
+        let rows = sqlx::query_as::<_, (String, i64, i64)>(query)
+            .bind(&threshold_str)
             .fetch_all(&self.pool)
             .await?;
 
