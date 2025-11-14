@@ -74,6 +74,12 @@ impl TaskPlanner {
     }
 
     fn estimate_complexity(&self, task: &str) -> u8 {
+        // TODO: Add input validation - reject empty strings or extremely long inputs (>10000 chars)
+        // TODO: Add tests for edge cases: empty string, single char, Unicode, null bytes
+        // TODO: Add tests for boundary values: should never exceed 10 or go below 0
+        // TODO: Add tests for case insensitivity: "REFACTOR" should match "refactor"
+        // TODO: Add tests for keyword repetition: "refactor refactor" should not double-count
+
         let mut complexity = 3; // Base complexity
 
         // Increase complexity based on keywords
@@ -88,6 +94,7 @@ impl TaskPlanner {
             "integration", "api", "database", "tests",
         ];
 
+        // TODO: Convert to lowercase for case-insensitive matching
         for keyword in &high_complexity_keywords {
             if task.contains(keyword) {
                 complexity += 2;
@@ -109,6 +116,11 @@ impl TaskPlanner {
     }
 
     fn detect_capabilities(&self, task: &str) -> Vec<AgentCapability> {
+        // TODO: Add tests for multiple capability detection
+        // TODO: Add tests for default CodeWriting fallback
+        // TODO: Add tests for edge cases: empty input should return default
+        // TODO: Add tests for case insensitive matching
+
         let mut capabilities = Vec::new();
 
         let capability_keywords = vec![
@@ -376,6 +388,54 @@ impl TaskPlanner {
             remaining_specs = not_ready;
         }
 
+        // TODO: Add comprehensive tests for create_phases():
+        // - Empty agents vector
+        // - Single agent with no dependencies
+        // - Linear chain (A -> B -> C)
+        // - Diamond dependency (A -> B,C -> D)
+        // - Fully parallel agents (no dependencies)
+        // - Circular dependency (A -> B -> A) - should use fallback
+        // - Self-dependency (A -> A)
+        // - Missing dependency (A depends on non-existent B)
+        // - Large graph (100+ agents) - performance test
+        // - Complex multi-path dependencies
+
         phases
     }
 }
+
+// TODO: Add unit test module
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//
+//     #[test]
+//     fn test_estimate_complexity_empty() {
+//         // Test empty string
+//     }
+//
+//     #[test]
+//     fn test_estimate_complexity_base_value() {
+//         // Test simple task returns base complexity
+//     }
+//
+//     #[test]
+//     fn test_estimate_complexity_high_keyword() {
+//         // Test high complexity keyword adds +2
+//     }
+//
+//     #[test]
+//     fn test_estimate_complexity_capped_at_10() {
+//         // Test that complexity never exceeds 10
+//     }
+//
+//     #[test]
+//     fn test_detect_capabilities_multiple() {
+//         // Test detecting multiple capabilities
+//     }
+//
+//     #[test]
+//     fn test_create_phases_circular_dependency() {
+//         // Test circular dependency handling (now fixed!)
+//     }
+// }

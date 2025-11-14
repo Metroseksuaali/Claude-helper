@@ -15,6 +15,13 @@ pub struct Database {
 }
 
 impl Database {
+    // TODO: Add tests for Database::new():
+    // - Test successful initialization
+    // - Test with invalid path (permission denied)
+    // - Test with corrupted database file
+    // - Test schema migration on existing database
+    // - Test concurrent database initialization
+
     pub async fn new(_config: &Config) -> Result<Self> {
         let db_path = Config::db_file()?;
         let db_url = format!("sqlite://{}", db_path.display());
@@ -39,6 +46,13 @@ impl Database {
     }
 
     /// Save a task execution for learning
+    // TODO: Add tests for save_task_execution():
+    // - Test successful save and verify data integrity
+    // - Test with extremely long task description (>10000 chars)
+    // - Test with special characters and Unicode
+    // - Test with invalid JSON in analysis/plan
+    // - Test concurrent saves (race conditions)
+    // - Test transaction rollback on error
     pub async fn save_task_execution(
         &self,
         task: &str,
@@ -70,6 +84,13 @@ impl Database {
     }
 
     /// Get agent statistics
+    // TODO: Add tests for get_agent_stats():
+    // - Test with empty database (division by zero)
+    // - Test with single record
+    // - Test with large dataset (1000+ records)
+    // - Test aggregation accuracy
+    // - Test with NULL values in tokens_used
+    // - Test with negative values (should never happen but handle gracefully)
     pub async fn get_agent_stats(&self) -> Result<AgentStats> {
         let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_executions")
             .fetch_one(&self.pool)

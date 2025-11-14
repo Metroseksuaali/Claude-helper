@@ -52,6 +52,15 @@ impl Optimizer {
         Ok(optimizations)
     }
 
+    // TODO: Add tests for detect_bash_chains():
+    // - Test with empty session (no bash calls)
+    // - Test with < 3 bash commands (should not trigger)
+    // - Test with git workflow (add, commit, push)
+    // - Test with test+build workflow
+    // - Test with false positives (git commands that shouldn't be combined)
+    // - Test savings calculation accuracy
+    // - Test with non-git commands
+    // - Test with mixed commands (git, npm, cargo, etc.)
     fn detect_bash_chains(&self, session: &SessionData) -> Result<Vec<Optimization>> {
         let mut optimizations = Vec::new();
 

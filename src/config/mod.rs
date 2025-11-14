@@ -15,6 +15,14 @@ pub struct Config {
     pub analyzer: AnalyzerConfig,
 }
 
+// TODO: Add validation for config values:
+// - default_mode must be one of: conservative, balanced, trust, interactive
+// - max_parallel_agents must be >= 1 and <= 100
+// - token_budget must be >= 1000 and reasonable (<= 1_000_000)
+// TODO: Add tests for config validation
+// TODO: Add tests for config serialization/deserialization roundtrip
+// TODO: Add tests for invalid TOML parsing
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MasterCoderConfig {
     /// Default autonomy mode: conservative, balanced, trust, interactive
