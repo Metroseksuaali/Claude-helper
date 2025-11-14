@@ -546,9 +546,414 @@ mod tests {
         assert!(capabilities.contains(&AgentCapability::Documentation));
     }
 
-    // TODO: Add more tests in Phase 2
-    // - test_create_phases_empty_agents
-    // - test_create_phases_single_agent
-    // - test_create_phases_linear_chain
-    // - test_create_phases_circular_dependency (tests the fix we just made!)
+    // ============================================================================
+    // Dependency Resolution Tests (10 tests) - Phase 2
+    // ============================================================================
+
+    #[test]
+    fn test_create_phases_empty_agents() {
+        let planner = create_test_planner();
+        let analysis = TaskAnalysis {
+            task_description: "test".to_string(),
+            complexity: 3,
+            estimated_files: 1,
+            estimated_tokens: 1000,
+            estimated_time_min: 5,
+            estimated_time_max: 10,
+            required_capabilities: vec![AgentCapability::CodeWriting],
+            keywords: vec![],
+        };
+
+        let phases = planner.create_phases(&analysis, vec![]);
+
+        // Empty input should produce empty phases
+        assert_eq!(phases.len(), 0);
+    }
+
+    #[test]
+    fn test_create_phases_single_agent() {
+        let planner = create_test_planner();
+        let analysis = TaskAnalysis {
+            task_description: "test".to_string(),
+            complexity: 3,
+            estimated_files: 1,
+            estimated_tokens: 1000,
+            estimated_time_min: 5,
+            estimated_time_max: 10,
+            required_capabilities: vec![AgentCapability::CodeWriting],
+            keywords: vec![],
+        };
+
+        let specs = vec![AgentSpec {
+            id: "agent-1".to_string(),
+            agent_type: "code".to_string(),
+            capability: AgentCapability::CodeWriting,
+            task: "write code".to_string(),
+            dependencies: vec![],
+        }];
+
+        let phases = planner.create_phases(&analysis, specs);
+
+        // Single agent with no dependencies should create one phase
+        assert_eq!(phases.len(), 1);
+        assert_eq!(phases[0].agents.len(), 1);
+        assert_eq!(phases[0].agents[0].id, "agent-1");
+    }
+
+    #[test]
+    fn test_create_phases_linear_chain() {
+        let planner = create_test_planner();
+        let analysis = TaskAnalysis {
+            task_description: "test".to_string(),
+            complexity: 5,
+            estimated_files: 3,
+            estimated_tokens: 3000,
+            estimated_time_min: 10,
+            estimated_time_max: 20,
+            required_capabilities: vec![],
+            keywords: vec![],
+        };
+
+        // A -> B -> C (linear dependency chain)
+        let specs = vec![
+            AgentSpec {
+                id: "C".to_string(),
+                agent_type: "code".to_string(),
+                capability: AgentCapability::CodeWriting,
+                task: "task C".to_string(),
+                dependencies: vec!["B".to_string()],
+            },
+            AgentSpec {
+                id: "A".to_string(),
+                agent_type: "arch".to_string(),
+                capability: AgentCapability::Architecture,
+                task: "task A".to_string(),
+                dependencies: vec![],
+            },
+            AgentSpec {
+                id: "B".to_string(),
+                agent_type: "test".to_string(),
+                capability: AgentCapability::Testing,
+                task: "task B".to_string(),
+                dependencies: vec!["A".to_string()],
+            },
+        ];
+
+        let phases = planner.create_phases(&analysis, specs);
+
+        // Should create 3 phases: [A], [B], [C]
+        assert_eq!(phases.len(), 3);
+        assert_eq!(phases[0].agents.len(), 1);
+        assert_eq!(phases[0].agents[0].id, "A");
+        assert_eq!(phases[1].agents.len(), 1);
+        assert_eq!(phases[1].agents[0].id, "B");
+        assert_eq!(phases[2].agents.len(), 1);
+        assert_eq!(phases[2].agents[0].id, "C");
+    }
+
+    #[test]
+    fn test_create_phases_diamond_dependency() {
+        let planner = create_test_planner();
+        let analysis = TaskAnalysis {
+            task_description: "test".to_string(),
+            complexity: 7,
+            estimated_files: 5,
+            estimated_tokens: 5000,
+            estimated_time_min: 15,
+            estimated_time_max: 30,
+            required_capabilities: vec![],
+            keywords: vec![],
+        };
+
+        // Diamond: A -> B, A -> C, B -> D, C -> D
+        let specs = vec![
+            AgentSpec {
+                id: "A".to_string(),
+                agent_type: "arch".to_string(),
+                capability: AgentCapability::Architecture,
+                task: "design".to_string(),
+                dependencies: vec![],
+            },
+            AgentSpec {
+                id: "B".to_string(),
+                agent_type: "code".to_string(),
+                capability: AgentCapability::CodeWriting,
+                task: "implement feature 1".to_string(),
+                dependencies: vec!["A".to_string()],
+            },
+            AgentSpec {
+                id: "C".to_string(),
+                agent_type: "code".to_string(),
+                capability: AgentCapability::CodeWriting,
+                task: "implement feature 2".to_string(),
+                dependencies: vec!["A".to_string()],
+            },
+            AgentSpec {
+                id: "D".to_string(),
+                agent_type: "test".to_string(),
+                capability: AgentCapability::Testing,
+                task: "test both features".to_string(),
+                dependencies: vec!["B".to_string(), "C".to_string()],
+            },
+        ];
+
+        let phases = planner.create_phases(&analysis, specs);
+
+        // Should create 3 phases: [A], [B, C] (parallel), [D]
+        assert_eq!(phases.len(), 3);
+        assert_eq!(phases[0].agents.len(), 1);
+        assert_eq!(phases[0].agents[0].id, "A");
+
+        // Phase 2 should have B and C in parallel
+        assert_eq!(phases[1].agents.len(), 2);
+        assert!(phases[1].parallel); // B and C can run in parallel
+
+        assert_eq!(phases[2].agents.len(), 1);
+        assert_eq!(phases[2].agents[0].id, "D");
+    }
+
+    #[test]
+    fn test_create_phases_fully_parallel() {
+        let planner = create_test_planner();
+        let analysis = TaskAnalysis {
+            task_description: "test".to_string(),
+            complexity: 5,
+            estimated_files: 4,
+            estimated_tokens: 4000,
+            estimated_time_min: 10,
+            estimated_time_max: 20,
+            required_capabilities: vec![],
+            keywords: vec![],
+        };
+
+        // Four independent agents with no dependencies
+        let specs = vec![
+            AgentSpec {
+                id: "A".to_string(),
+                agent_type: "code".to_string(),
+                capability: AgentCapability::CodeWriting,
+                task: "task A".to_string(),
+                dependencies: vec![],
+            },
+            AgentSpec {
+                id: "B".to_string(),
+                agent_type: "test".to_string(),
+                capability: AgentCapability::Testing,
+                task: "task B".to_string(),
+                dependencies: vec![],
+            },
+            AgentSpec {
+                id: "C".to_string(),
+                agent_type: "doc".to_string(),
+                capability: AgentCapability::Documentation,
+                task: "task C".to_string(),
+                dependencies: vec![],
+            },
+            AgentSpec {
+                id: "D".to_string(),
+                agent_type: "security".to_string(),
+                capability: AgentCapability::Security,
+                task: "task D".to_string(),
+                dependencies: vec![],
+            },
+        ];
+
+        let phases = planner.create_phases(&analysis, specs);
+
+        // All agents should be in a single parallel phase
+        assert_eq!(phases.len(), 1);
+        assert_eq!(phases[0].agents.len(), 4);
+        assert!(phases[0].parallel); // All can run in parallel
+    }
+
+    #[test]
+    fn test_create_phases_circular_dependency() {
+        // This tests the security fix we implemented!
+        let planner = create_test_planner();
+        let analysis = TaskAnalysis {
+            task_description: "test".to_string(),
+            complexity: 5,
+            estimated_files: 2,
+            estimated_tokens: 2000,
+            estimated_time_min: 10,
+            estimated_time_max: 20,
+            required_capabilities: vec![],
+            keywords: vec![],
+        };
+
+        // Circular dependency: A depends on B, B depends on A
+        let specs = vec![
+            AgentSpec {
+                id: "A".to_string(),
+                agent_type: "code".to_string(),
+                capability: AgentCapability::CodeWriting,
+                task: "task A".to_string(),
+                dependencies: vec!["B".to_string()],
+            },
+            AgentSpec {
+                id: "B".to_string(),
+                agent_type: "test".to_string(),
+                capability: AgentCapability::Testing,
+                task: "task B".to_string(),
+                dependencies: vec!["A".to_string()],
+            },
+        ];
+
+        let phases = planner.create_phases(&analysis, specs);
+
+        // Should detect circular dependency and handle gracefully
+        // The fallback creates a phase with all remaining agents
+        assert!(!phases.is_empty());
+
+        // All agents should still be included (no infinite loop!)
+        let total_agents: usize = phases.iter().map(|p| p.agents.len()).sum();
+        assert_eq!(total_agents, 2);
+    }
+
+    #[test]
+    fn test_create_phases_self_dependency() {
+        let planner = create_test_planner();
+        let analysis = TaskAnalysis {
+            task_description: "test".to_string(),
+            complexity: 3,
+            estimated_files: 1,
+            estimated_tokens: 1000,
+            estimated_time_min: 5,
+            estimated_time_max: 10,
+            required_capabilities: vec![],
+            keywords: vec![],
+        };
+
+        // Agent that depends on itself
+        let specs = vec![AgentSpec {
+            id: "A".to_string(),
+            agent_type: "code".to_string(),
+            capability: AgentCapability::CodeWriting,
+            task: "task A".to_string(),
+            dependencies: vec!["A".to_string()],
+        }];
+
+        let phases = planner.create_phases(&analysis, specs);
+
+        // Should handle self-dependency (treated as circular)
+        assert!(!phases.is_empty());
+        let total_agents: usize = phases.iter().map(|p| p.agents.len()).sum();
+        assert_eq!(total_agents, 1);
+    }
+
+    #[test]
+    fn test_create_phases_missing_dependency() {
+        let planner = create_test_planner();
+        let analysis = TaskAnalysis {
+            task_description: "test".to_string(),
+            complexity: 4,
+            estimated_files: 2,
+            estimated_tokens: 2000,
+            estimated_time_min: 10,
+            estimated_time_max: 15,
+            required_capabilities: vec![],
+            keywords: vec![],
+        };
+
+        // Agent A depends on non-existent agent "X"
+        let specs = vec![AgentSpec {
+            id: "A".to_string(),
+            agent_type: "code".to_string(),
+            capability: AgentCapability::CodeWriting,
+            task: "task A".to_string(),
+            dependencies: vec!["X".to_string()], // X doesn't exist
+        }];
+
+        let phases = planner.create_phases(&analysis, specs);
+
+        // Should handle missing dependency gracefully (fallback)
+        assert!(!phases.is_empty());
+        let total_agents: usize = phases.iter().map(|p| p.agents.len()).sum();
+        assert_eq!(total_agents, 1);
+    }
+
+    #[test]
+    fn test_create_phases_parallel_flag_correct() {
+        let planner = create_test_planner();
+        let analysis = TaskAnalysis {
+            task_description: "test".to_string(),
+            complexity: 5,
+            estimated_files: 3,
+            estimated_tokens: 3000,
+            estimated_time_min: 10,
+            estimated_time_max: 20,
+            required_capabilities: vec![],
+            keywords: vec![],
+        };
+
+        // Sequential chain should have parallel=false
+        let specs = vec![
+            AgentSpec {
+                id: "A".to_string(),
+                agent_type: "arch".to_string(),
+                capability: AgentCapability::Architecture,
+                task: "design".to_string(),
+                dependencies: vec![],
+            },
+            AgentSpec {
+                id: "B".to_string(),
+                agent_type: "code".to_string(),
+                capability: AgentCapability::CodeWriting,
+                task: "implement".to_string(),
+                dependencies: vec!["A".to_string()],
+            },
+        ];
+
+        let phases = planner.create_phases(&analysis, specs);
+
+        assert_eq!(phases.len(), 2);
+        // First phase with single agent should not be marked parallel
+        assert!(!phases[0].parallel);
+        // Second phase with single agent should not be marked parallel
+        assert!(!phases[1].parallel);
+    }
+
+    #[test]
+    fn test_create_phases_no_agent_lost() {
+        let planner = create_test_planner();
+        let analysis = TaskAnalysis {
+            task_description: "test".to_string(),
+            complexity: 6,
+            estimated_files: 5,
+            estimated_tokens: 5000,
+            estimated_time_min: 15,
+            estimated_time_max: 30,
+            required_capabilities: vec![],
+            keywords: vec![],
+        };
+
+        // Complex graph with multiple paths
+        let specs = vec![
+            AgentSpec { id: "A".to_string(), agent_type: "a".to_string(),
+                capability: AgentCapability::Architecture, task: "a".to_string(), dependencies: vec![] },
+            AgentSpec { id: "B".to_string(), agent_type: "b".to_string(),
+                capability: AgentCapability::CodeWriting, task: "b".to_string(), dependencies: vec!["A".to_string()] },
+            AgentSpec { id: "C".to_string(), agent_type: "c".to_string(),
+                capability: AgentCapability::CodeWriting, task: "c".to_string(), dependencies: vec!["A".to_string()] },
+            AgentSpec { id: "D".to_string(), agent_type: "d".to_string(),
+                capability: AgentCapability::Testing, task: "d".to_string(), dependencies: vec!["B".to_string()] },
+            AgentSpec { id: "E".to_string(), agent_type: "e".to_string(),
+                capability: AgentCapability::Documentation, task: "e".to_string(), dependencies: vec!["C".to_string()] },
+        ];
+
+        let original_count = specs.len();
+        let phases = planner.create_phases(&analysis, specs);
+
+        // Verify all agents appear exactly once
+        let total_agents: usize = phases.iter().map(|p| p.agents.len()).sum();
+        assert_eq!(total_agents, original_count);
+
+        // Verify no duplicates
+        let mut all_ids: Vec<String> = phases.iter()
+            .flat_map(|p| p.agents.iter().map(|a| a.id.clone()))
+            .collect();
+        all_ids.sort();
+        all_ids.dedup();
+        assert_eq!(all_ids.len(), original_count);
+    }
 }
