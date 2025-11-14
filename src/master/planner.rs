@@ -404,38 +404,151 @@ impl TaskPlanner {
     }
 }
 
-// TODO: Add unit test module
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//
-//     #[test]
-//     fn test_estimate_complexity_empty() {
-//         // Test empty string
-//     }
-//
-//     #[test]
-//     fn test_estimate_complexity_base_value() {
-//         // Test simple task returns base complexity
-//     }
-//
-//     #[test]
-//     fn test_estimate_complexity_high_keyword() {
-//         // Test high complexity keyword adds +2
-//     }
-//
-//     #[test]
-//     fn test_estimate_complexity_capped_at_10() {
-//         // Test that complexity never exceeds 10
-//     }
-//
-//     #[test]
-//     fn test_detect_capabilities_multiple() {
-//         // Test detecting multiple capabilities
-//     }
-//
-//     #[test]
-//     fn test_create_phases_circular_dependency() {
-//         // Test circular dependency handling (now fixed!)
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_planner() -> TaskPlanner {
+        TaskPlanner::new(Config::default())
+    }
+
+    // ============================================================================
+    // Complexity Calculation Tests (8 tests)
+    // ============================================================================
+
+    #[test]
+    fn test_estimate_complexity_empty_string() {
+        let planner = create_test_planner();
+        let complexity = planner.estimate_complexity("");
+        // Empty string should return base complexity
+        assert_eq!(complexity, 3);
+    }
+
+    #[test]
+    fn test_estimate_complexity_base_value() {
+        let planner = create_test_planner();
+        let complexity = planner.estimate_complexity("fix typo in README");
+        // Simple task with no keywords should return base complexity
+        assert_eq!(complexity, 3);
+    }
+
+    #[test]
+    fn test_estimate_complexity_high_keyword_refactor() {
+        let planner = create_test_planner();
+        let complexity = planner.estimate_complexity("refactor the code");
+        // Base (3) + high keyword (2) = 5
+        assert_eq!(complexity, 5);
+    }
+
+    #[test]
+    fn test_estimate_complexity_medium_keyword_implement() {
+        let planner = create_test_planner();
+        let complexity = planner.estimate_complexity("implement new feature");
+        // Base (3) + medium keyword (1) = 4
+        assert_eq!(complexity, 4);
+    }
+
+    #[test]
+    fn test_estimate_complexity_multiple_requirements() {
+        let planner = create_test_planner();
+        let complexity = planner.estimate_complexity("implement authentication and add tests");
+        // Base (3) + implement (1) + authentication (2) + tests (1) + "and" bonus (1) = 8
+        assert_eq!(complexity, 8);
+    }
+
+    #[test]
+    fn test_estimate_complexity_capped_at_10() {
+        let planner = create_test_planner();
+        let complexity = planner.estimate_complexity(
+            "refactor migrate redesign architecture authentication oauth security encryption performance optimize scale distributed"
+        );
+        // Should have many high keywords but capped at 10
+        assert_eq!(complexity, 10);
+    }
+
+    #[test]
+    fn test_estimate_complexity_case_sensitivity() {
+        let planner = create_test_planner();
+        // Note: Current implementation is case-sensitive (TODO to fix)
+        let lower = planner.estimate_complexity("refactor code");
+        let upper = planner.estimate_complexity("REFACTOR code");
+
+        // For now, uppercase won't match (this is a known issue)
+        // When case-insensitive matching is implemented, this test should be updated
+        assert_eq!(lower, 5); // Base + refactor
+        assert_eq!(upper, 3); // Base only (doesn't match uppercase)
+    }
+
+    #[test]
+    fn test_estimate_complexity_multiple_same_keyword() {
+        let planner = create_test_planner();
+        let complexity = planner.estimate_complexity("refactor refactor refactor");
+        // Current implementation counts keyword match once per keyword check
+        // Base (3) + refactor (2) = 5 (doesn't count repetitions)
+        // TODO: Consider if we should count multiple occurrences
+        assert_eq!(complexity, 5);
+    }
+
+    // ============================================================================
+    // Capability Detection Tests (6 tests)
+    // ============================================================================
+
+    #[test]
+    fn test_detect_capabilities_empty_string() {
+        let planner = create_test_planner();
+        let capabilities = planner.detect_capabilities("");
+        // Empty string should default to CodeWriting
+        assert!(capabilities.contains(&AgentCapability::CodeWriting));
+    }
+
+    #[test]
+    fn test_detect_capabilities_single_keyword() {
+        let planner = create_test_planner();
+        let capabilities = planner.detect_capabilities("write tests for the feature");
+        // Should detect Testing capability
+        assert!(capabilities.contains(&AgentCapability::Testing));
+    }
+
+    #[test]
+    fn test_detect_capabilities_multiple_keywords() {
+        let planner = create_test_planner();
+        let capabilities = planner.detect_capabilities(
+            "implement authentication with security audit and tests"
+        );
+        // Should detect CodeWriting, Security, and Testing
+        assert!(capabilities.contains(&AgentCapability::CodeWriting));
+        assert!(capabilities.contains(&AgentCapability::Security));
+        assert!(capabilities.contains(&AgentCapability::Testing));
+        assert!(capabilities.len() >= 3);
+    }
+
+    #[test]
+    fn test_detect_capabilities_default_code_writing() {
+        let planner = create_test_planner();
+        let capabilities = planner.detect_capabilities("some random task");
+        // Should default to CodeWriting when no specific keywords match
+        assert!(capabilities.contains(&AgentCapability::CodeWriting));
+    }
+
+    #[test]
+    fn test_detect_capabilities_security_audit() {
+        let planner = create_test_planner();
+        let capabilities = planner.detect_capabilities("perform security audit");
+        // Should detect Security capability
+        assert!(capabilities.contains(&AgentCapability::Security));
+    }
+
+    #[test]
+    fn test_detect_capabilities_documentation() {
+        let planner = create_test_planner();
+        let capabilities = planner.detect_capabilities("write documentation for the API");
+        // Should detect Documentation capability
+        assert!(capabilities.contains(&AgentCapability::Documentation));
+    }
+
+    // TODO: Add more tests in Phase 2
+    // - test_create_phases_empty_agents
+    // - test_create_phases_single_agent
+    // - test_create_phases_linear_chain
+    // - test_create_phases_circular_dependency (tests the fix we just made!)
+}
