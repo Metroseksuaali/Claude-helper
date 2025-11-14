@@ -70,3 +70,7 @@ strip = true
 [[bin]]
 name = "claude-helper"
 path = "src/main.rs"
+
+[[test]]
+name = "database_tests"
+path = "tests/integration/database_tests.rs"
