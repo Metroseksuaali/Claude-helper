@@ -182,13 +182,82 @@ impl StatusLine {
         }
     }
 
-    async fn show_detailed_breakdown(&self, usage: &usage_tracker::Usage) -> Result<()> {
+    async fn show_detailed_breakdown(&self, _usage: &usage_tracker::Usage) -> Result<()> {
+        use crate::db::Database;
+
         println!("\n{}", "Detailed Breakdown:".white().bold());
+        println!("{}", "─".repeat(60).bright_cyan());
 
-        // This would show per-session or per-hour breakdown
-        // For now, just show some additional info
+        // Try to connect to database and show historical data
+        match Database::new(&self.config).await {
+            Ok(db) => {
+                // Show hourly breakdown
+                println!("\n{}", "Token Usage (Last 24 Hours):".white());
+                match db.get_hourly_breakdown(24).await {
+                    Ok(hourly) if !hourly.is_empty() => {
+                        for entry in hourly.iter().take(10) {
+                            let hour_str = entry.hour.format("%Y-%m-%d %H:%M");
+                            let tokens_k = entry.total_tokens / 1000;
+                            let bar_len = (entry.total_tokens / 500).min(20);
+                            let bar = "▓".repeat(bar_len);
 
-        println!("  API endpoint: {}", self.config.statusline.api_endpoint);
+                            println!(
+                                "  {} | {}k tokens | {} tasks | {}",
+                                hour_str.to_string().bright_blue(),
+                                tokens_k,
+                                entry.task_count,
+                                bar.green()
+                            );
+                        }
+                    }
+                    Ok(_) => {
+                        println!("  No historical data available yet");
+                    }
+                    Err(e) => {
+                        println!("  Unable to fetch hourly data: {}", e);
+                    }
+                }
+
+                // Show recent tasks
+                println!("\n{}", "Recent Task Executions:".white());
+                match db.get_recent_tasks(5).await {
+                    Ok(tasks) if !tasks.is_empty() => {
+                        for task in tasks {
+                            let status = if task.success {
+                                "✓".green()
+                            } else {
+                                "✗".red()
+                            };
+                            let time_str = task.timestamp.format("%H:%M:%S");
+                            let desc = if task.description.len() > 40 {
+                                format!("{}...", &task.description[..37])
+                            } else {
+                                task.description.clone()
+                            };
+
+                            println!(
+                                "  {} {} | {}k tokens | {}",
+                                status,
+                                time_str.to_string().bright_blue(),
+                                task.tokens_used / 1000,
+                                desc
+                            );
+                        }
+                    }
+                    Ok(_) => {
+                        println!("  No task history available yet");
+                    }
+                    Err(e) => {
+                        println!("  Unable to fetch task history: {}", e);
+                    }
+                }
+            }
+            Err(_) => {
+                // Database not available, show basic info
+                println!("\n  API endpoint: {}", self.config.statusline.api_endpoint);
+                println!("  Database not initialized - no historical data available");
+            }
+        }
 
         Ok(())
     }

@@ -171,6 +171,70 @@ impl Database {
 
         Ok(())
     }
+
+    /// Get hourly token usage breakdown
+    pub async fn get_hourly_breakdown(&self, hours: usize) -> Result<Vec<HourlyBreakdown>> {
+        let query = format!(
+            "SELECT
+                strftime('%Y-%m-%d %H:00:00', created_at) as hour,
+                COUNT(*) as task_count,
+                COALESCE(SUM(tokens_used), 0) as total_tokens
+             FROM agent_executions
+             WHERE datetime(created_at) >= datetime('now', '-{} hours')
+             GROUP BY hour
+             ORDER BY hour DESC",
+            hours
+        );
+
+        let rows = sqlx::query_as::<_, (String, i64, i64)>(&query)
+            .fetch_all(&self.pool)
+            .await?;
+
+        let mut breakdown = Vec::new();
+        for row in rows {
+            let timestamp = DateTime::parse_from_str(&format!("{} +0000", row.0), "%Y-%m-%d %H:%M:%S %z")
+                .unwrap_or_else(|_| Utc::now().into())
+                .with_timezone(&Utc);
+
+            breakdown.push(HourlyBreakdown {
+                hour: timestamp,
+                task_count: row.1 as usize,
+                total_tokens: row.2 as usize,
+            });
+        }
+
+        Ok(breakdown)
+    }
+
+    /// Get recent task executions summary
+    pub async fn get_recent_tasks(&self, limit: usize) -> Result<Vec<TaskSummary>> {
+        let rows = sqlx::query_as::<_, (i64, String, i64, bool, String)>(
+            "SELECT id, task_description, actual_tokens, success, created_at
+             FROM task_executions
+             ORDER BY created_at DESC
+             LIMIT ?"
+        )
+        .bind(limit as i64)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut tasks = Vec::new();
+        for row in rows {
+            let timestamp = DateTime::parse_from_rfc3339(&row.4)
+                .unwrap_or_else(|_| Utc::now().into())
+                .with_timezone(&Utc);
+
+            tasks.push(TaskSummary {
+                id: row.0 as usize,
+                description: row.1,
+                tokens_used: row.2 as usize,
+                success: row.3,
+                timestamp,
+            });
+        }
+
+        Ok(tasks)
+    }
 }
 
 pub struct AgentStats {
@@ -190,6 +254,20 @@ pub struct AgentHistoryEntry {
     pub task: String,
     pub tokens_used: usize,
     pub execution_time_secs: f64,
+    pub success: bool,
+    pub timestamp: DateTime<Utc>,
+}
+
+pub struct HourlyBreakdown {
+    pub hour: DateTime<Utc>,
+    pub task_count: usize,
+    pub total_tokens: usize,
+}
+
+pub struct TaskSummary {
+    pub id: usize,
+    pub description: String,
+    pub tokens_used: usize,
     pub success: bool,
     pub timestamp: DateTime<Utc>,
 }
