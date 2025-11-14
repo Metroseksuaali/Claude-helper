@@ -42,16 +42,20 @@ impl AgentManager {
         println!("  Average per agent: {:.2} seconds", stats.avg_time_per_agent);
 
         println!("\n{}", "Success Rate:".white().bold());
-        let success_rate = (stats.successful_executions as f64 / stats.total_executions as f64) * 100.0;
-        let rate_str = format!("{:.1}%", success_rate);
-        let colored_rate = if success_rate >= 90.0 {
-            rate_str.green()
-        } else if success_rate >= 70.0 {
-            rate_str.yellow()
+        if stats.total_executions > 0 {
+            let success_rate = (stats.successful_executions as f64 / stats.total_executions as f64) * 100.0;
+            let rate_str = format!("{:.1}%", success_rate);
+            let colored_rate = if success_rate >= 90.0 {
+                rate_str.green()
+            } else if success_rate >= 70.0 {
+                rate_str.yellow()
+            } else {
+                rate_str.red()
+            };
+            println!("  {} ({}/{})", colored_rate, stats.successful_executions, stats.total_executions);
         } else {
-            rate_str.red()
-        };
-        println!("  {} ({}/{})", colored_rate, stats.successful_executions, stats.total_executions);
+            println!("  {} (no executions yet)", "N/A".white());
+        }
 
         Ok(())
     }

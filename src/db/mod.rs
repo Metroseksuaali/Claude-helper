@@ -17,12 +17,15 @@ pub struct Database {
 impl Database {
     pub async fn new(_config: &Config) -> Result<Self> {
         let db_path = Config::db_file()?;
-        let db_url = format!("sqlite:{}", db_path.display());
+        let db_url = format!("sqlite://{}", db_path.display());
 
-        // Create pool
+        // Create pool with create_if_missing option
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
-            .connect(&db_url)
+            .connect_with(
+                db_url.parse::<sqlx::sqlite::SqliteConnectOptions>()?
+                    .create_if_missing(true)
+            )
             .await
             .context("Failed to connect to database")?;
 
