@@ -175,6 +175,16 @@ impl TaskPlanner {
                 AgentCapability::Migration,
                 vec!["migrate", "migration", "upgrade", "convert"],
             ),
+            (
+                AgentCapability::Review,
+                vec![
+                    "review",
+                    "audit",
+                    "assess",
+                    "check quality",
+                    "quality check",
+                ],
+            ),
         ];
 
         for (capability, keywords) in capability_keywords {
@@ -341,6 +351,51 @@ impl TaskPlanner {
                         capability: capability.clone(),
                         task: "Plan and execute migration strategy".to_string(),
                         dependencies: vec![],
+                    });
+                }
+
+                AgentCapability::Debugging => {
+                    specs.push(AgentSpec {
+                        id: format!("debugger-{}", specs.len()),
+                        agent_type: "Debug Specialist".to_string(),
+                        capability: capability.clone(),
+                        task: "Debug and fix issues in the codebase".to_string(),
+                        dependencies: specs
+                            .iter()
+                            .filter(|s| s.capability == AgentCapability::CodeWriting)
+                            .map(|s| s.id.clone())
+                            .collect(),
+                    });
+                }
+
+                AgentCapability::Performance => {
+                    specs.push(AgentSpec {
+                        id: format!("performance-{}", specs.len()),
+                        agent_type: "Performance Engineer".to_string(),
+                        capability: capability.clone(),
+                        task: "Optimize performance and identify bottlenecks".to_string(),
+                        dependencies: specs
+                            .iter()
+                            .filter(|s| {
+                                s.capability == AgentCapability::CodeWriting
+                                    || s.capability == AgentCapability::Testing
+                            })
+                            .map(|s| s.id.clone())
+                            .collect(),
+                    });
+                }
+
+                AgentCapability::Review => {
+                    specs.push(AgentSpec {
+                        id: format!("reviewer-{}", specs.len()),
+                        agent_type: "Code Reviewer".to_string(),
+                        capability: capability.clone(),
+                        task: "Review code quality and adherence to best practices".to_string(),
+                        dependencies: specs
+                            .iter()
+                            .filter(|s| s.capability == AgentCapability::CodeWriting)
+                            .map(|s| s.id.clone())
+                            .collect(),
                     });
                 }
 

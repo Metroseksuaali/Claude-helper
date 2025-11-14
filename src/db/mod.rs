@@ -121,9 +121,20 @@ impl Database {
         };
 
         // Get capability breakdown
-        let by_capability = std::collections::HashMap::new();
-        // This would query the actual capability distribution
-        // For now, using placeholder
+        let capability_rows = sqlx::query_as::<_, (String, i64)>(
+            "SELECT capability, COUNT(*) as count
+             FROM agent_executions
+             GROUP BY capability",
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut by_capability = std::collections::HashMap::new();
+        for (capability_str, count) in capability_rows {
+            if let Some(capability) = AgentCapability::from_str(&capability_str) {
+                by_capability.insert(capability, count as usize);
+            }
+        }
 
         Ok(AgentStats {
             total_executions: total as usize,
@@ -138,8 +149,8 @@ impl Database {
 
     /// Get agent execution history
     pub async fn get_agent_history(&self, limit: usize) -> Result<Vec<AgentHistoryEntry>> {
-        let rows = sqlx::query_as::<_, (String, String, String, i64, i64, bool, String)>(
-            "SELECT agent_id, agent_type, task, tokens_used, execution_time_ms, success, created_at
+        let rows = sqlx::query_as::<_, (String, String, String, String, i64, i64, bool, String)>(
+            "SELECT agent_id, agent_type, capability, task, tokens_used, execution_time_ms, success, created_at
              FROM agent_executions
              ORDER BY created_at DESC
              LIMIT ?",
@@ -151,18 +162,22 @@ impl Database {
         let mut history = Vec::new();
 
         for row in rows {
-            let timestamp = DateTime::parse_from_rfc3339(&row.6)
+            let timestamp = DateTime::parse_from_rfc3339(&row.7)
                 .unwrap_or_else(|_| Utc::now().into())
                 .with_timezone(&Utc);
+
+            // Parse capability from database, fallback to CodeWriting for unknown values
+            let capability =
+                AgentCapability::from_str(&row.2).unwrap_or(AgentCapability::CodeWriting);
 
             history.push(AgentHistoryEntry {
                 agent_id: row.0,
                 agent_type: row.1,
-                capability: AgentCapability::CodeWriting, // Would parse from DB
-                task: row.2,
-                tokens_used: row.3 as usize,
-                execution_time_secs: row.4 as f64 / 1000.0,
-                success: row.5,
+                capability,
+                task: row.3,
+                tokens_used: row.4 as usize,
+                execution_time_secs: row.5 as f64 / 1000.0,
+                success: row.6,
                 timestamp,
             });
         }
