@@ -35,11 +35,11 @@ enum Commands {
         mode: String,
 
         /// Maximum number of parallel agents
-        #[arg(short, long)]
+        #[arg(long)]
         max_agents: Option<usize>,
 
         /// Token budget for this task
-        #[arg(short, long)]
+        #[arg(short = 'b', long)]
         token_budget: Option<usize>,
     },
 
