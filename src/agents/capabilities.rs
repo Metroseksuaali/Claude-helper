@@ -41,4 +41,21 @@ impl AgentCapability {
             Self::Review => "👁️",
         }
     }
+
+    /// Parse capability from Debug string representation
+    /// Returns None for invalid/unknown capability strings
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "Architecture" => Some(Self::Architecture),
+            "CodeWriting" => Some(Self::CodeWriting),
+            "Testing" => Some(Self::Testing),
+            "Security" => Some(Self::Security),
+            "Documentation" => Some(Self::Documentation),
+            "Debugging" => Some(Self::Debugging),
+            "Performance" => Some(Self::Performance),
+            "Migration" => Some(Self::Migration),
+            "Review" => Some(Self::Review),
+            _ => None,
+        }
+    }
 }
