@@ -287,11 +287,11 @@ impl TaskPlanner {
                             agent_type: agent_name,
                             capability: capability.clone(),
                             task: format!("Implement code changes{}", suffix),
-                            dependencies: if specs.is_empty() {
-                                vec![]
-                            } else {
-                                vec![specs[0].id.clone()]
-                            },
+                            dependencies: specs
+                                .iter()
+                                .filter(|s| s.capability == AgentCapability::Architecture)
+                                .map(|s| s.id.clone())
+                                .collect(),
                         });
                     }
                 }
