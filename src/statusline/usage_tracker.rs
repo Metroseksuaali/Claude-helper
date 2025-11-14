@@ -1,7 +1,7 @@
+use crate::config::Config;
 use anyhow::{Context, Result};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use crate::config::Config;
 
 #[derive(Debug, Clone)]
 pub struct Usage {
@@ -69,7 +69,8 @@ impl UsageTracker {
 
         // Note: This endpoint might not be the correct one
         // You'd need to find the actual Claude usage API endpoint
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/usage", self.config.statusline.api_endpoint))
             .header("Authorization", format!("Bearer {}", token))
             .send()
@@ -80,7 +81,9 @@ impl UsageTracker {
             anyhow::bail!("API returned error: {}", response.status());
         }
 
-        let usage_response: ClaudeUsageResponse = response.json().await
+        let usage_response: ClaudeUsageResponse = response
+            .json()
+            .await
             .context("Failed to parse usage response")?;
 
         Ok(self.convert_response(usage_response))
@@ -96,9 +99,24 @@ impl UsageTracker {
     // - Test percentage overflow (255+)
     // - Test floating point precision issues
     fn convert_response(&self, response: ClaudeUsageResponse) -> Usage {
-        // TODO: Add validation - handle limit == 0 to prevent division by zero
-        let five_hour_percent = ((response.usage.five_hour.used as f64 / response.usage.five_hour.limit as f64) * 100.0) as u8;
-        let seven_day_percent = ((response.usage.seven_day.used as f64 / response.usage.seven_day.limit as f64) * 100.0) as u8;
+        // Calculate percentages with division by zero protection and clamping to 0-100 range
+        let five_hour_percent = if response.usage.five_hour.limit == 0 {
+            0
+        } else {
+            let percent = (response.usage.five_hour.used as f64
+                / response.usage.five_hour.limit as f64)
+                * 100.0;
+            percent.clamp(0.0, 100.0) as u8
+        };
+
+        let seven_day_percent = if response.usage.seven_day.limit == 0 {
+            0
+        } else {
+            let percent = (response.usage.seven_day.used as f64
+                / response.usage.seven_day.limit as f64)
+                * 100.0;
+            percent.clamp(0.0, 100.0) as u8
+        };
 
         // Calculate burn rate (tokens per hour)
         let burn_rate_tokens = response.usage.five_hour.used as f64 / 5.0;
@@ -110,7 +128,8 @@ impl UsageTracker {
         let avg_cost_per_million = 9.0; // Average of input and output
         let burn_rate_cost = (burn_rate_tokens / 1_000_000.0) * avg_cost_per_million;
 
-        let estimated_seven_day_cost = (response.usage.seven_day.used as f64 / 1_000_000.0) * avg_cost_per_million;
+        let estimated_seven_day_cost =
+            (response.usage.seven_day.used as f64 / 1_000_000.0) * avg_cost_per_million;
 
         Usage {
             five_hour_used: response.usage.five_hour.used,
