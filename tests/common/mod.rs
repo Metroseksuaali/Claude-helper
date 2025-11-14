@@ -25,7 +25,8 @@ pub mod sample_tasks {
     pub const EMPTY: &str = "";
     pub const SIMPLE: &str = "fix typo in README";
     pub const MEDIUM: &str = "implement user authentication";
-    pub const COMPLEX: &str = "refactor migrate security architecture with testing and documentation";
+    pub const COMPLEX: &str =
+        "refactor migrate security architecture with testing and documentation";
     pub const HIGH_COMPLEXITY: &str = "refactor the authentication system";
     pub const MULTIPLE_REQUIREMENTS: &str = "implement OAuth and add tests";
 }

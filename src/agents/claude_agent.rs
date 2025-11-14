@@ -1,10 +1,10 @@
+use super::{Agent, AgentCapability, AgentResult};
+use crate::config::Config;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use std::time::Instant;
-use crate::config::Config;
-use super::{Agent, AgentResult, AgentCapability};
 
 #[derive(Debug, Serialize)]
 struct ClaudeRequest {
@@ -83,7 +83,8 @@ impl ClaudeAgent {
             system: Some(self.system_prompt.clone()),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post("https://api.anthropic.com/v1/messages")
             .header("x-api-key", token)
             .header("anthropic-version", "2023-06-01")
@@ -99,7 +100,9 @@ impl ClaudeAgent {
             anyhow::bail!("Claude API error ({}): {}", status, error_text);
         }
 
-        let claude_response: ClaudeResponse = response.json().await
+        let claude_response: ClaudeResponse = response
+            .json()
+            .await
             .context("Failed to parse Claude API response")?;
 
         Ok(claude_response)
@@ -133,7 +136,8 @@ impl Agent for ClaudeAgent {
         let response = self.call_claude_api(&self.conversation).await?;
 
         // Extract text from response
-        let output = response.content
+        let output = response
+            .content
             .iter()
             .filter_map(|block| block.text.as_ref())
             .cloned()

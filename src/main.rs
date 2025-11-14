@@ -1,10 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use claude_helper::{
-    config::Config,
-    master::MasterCoder,
-    statusline::StatusLine,
-    analyzer::SessionAnalyzer,
+    analyzer::SessionAnalyzer, config::Config, master::MasterCoder, statusline::StatusLine,
     tui::App,
 };
 use tracing::{info, Level};
@@ -133,7 +130,11 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     // Initialize logging
-    let log_level = if cli.verbose { Level::DEBUG } else { Level::INFO };
+    let log_level = if cli.verbose {
+        Level::DEBUG
+    } else {
+        Level::INFO
+    };
     tracing_subscriber::fmt()
         .with_max_level(log_level)
         .with_target(false)
@@ -146,7 +147,12 @@ async fn main() -> Result<()> {
 
     // Execute command
     match cli.command {
-        Commands::Run { task, mode, max_agents, token_budget } => {
+        Commands::Run {
+            task,
+            mode,
+            max_agents,
+            token_budget,
+        } => {
             let mut master = MasterCoder::new(config, mode).await?;
             if let Some(max) = max_agents {
                 master.set_max_agents(max);

@@ -1,10 +1,10 @@
 mod usage_tracker;
 
-use anyhow::{Context, Result};
 use crate::config::Config;
-use usage_tracker::UsageTracker;
+use anyhow::{Context, Result};
 use colored::Colorize;
 use std::io::Write;
+use usage_tracker::UsageTracker;
 
 pub struct StatusLine {
     config: Config,
@@ -51,13 +51,16 @@ impl StatusLine {
         println!("\n{}", "Current 5-Hour Block:".white().bold());
         let five_hour_bar = self.create_progress_bar(usage.five_hour_percent);
         println!("  {}", five_hour_bar);
-        println!("  Used: {} / {} tokens ({}%)",
-                 usage.five_hour_used,
-                 usage.five_hour_limit,
-                 usage.five_hour_percent);
+        println!(
+            "  Used: {} / {} tokens ({}%)",
+            usage.five_hour_used, usage.five_hour_limit, usage.five_hour_percent
+        );
 
         if usage.five_hour_minutes_remaining > 0 {
-            println!("  Time remaining: {} minutes", usage.five_hour_minutes_remaining);
+            println!(
+                "  Time remaining: {} minutes",
+                usage.five_hour_minutes_remaining
+            );
         } else {
             println!("  Block resets: soon");
         }
@@ -66,16 +69,19 @@ impl StatusLine {
         println!("\n{}", "7-Day Total:".white().bold());
         let seven_day_bar = self.create_progress_bar(usage.seven_day_percent);
         println!("  {}", seven_day_bar);
-        println!("  Used: {} / {} tokens ({}%)",
-                 usage.seven_day_used,
-                 usage.seven_day_limit,
-                 usage.seven_day_percent);
+        println!(
+            "  Used: {} / {} tokens ({}%)",
+            usage.seven_day_used, usage.seven_day_limit, usage.seven_day_percent
+        );
 
         // Burn rate and cost
         if self.config.statusline.show_costs {
             println!("\n{}", "Cost Information:".white().bold());
             println!("  Burn rate: ${:.2}/hour", usage.burn_rate_per_hour);
-            println!("  Estimated 7-day cost: ${:.2}", usage.estimated_seven_day_cost);
+            println!(
+                "  Estimated 7-day cost: ${:.2}",
+                usage.estimated_seven_day_cost
+            );
 
             if usage.five_hour_percent > 80 {
                 println!("\n  {} You're using tokens quickly!", "⚠".yellow());
@@ -93,7 +99,10 @@ impl StatusLine {
     pub async fn watch(&self, interval: u64) -> Result<()> {
         use tokio::time::{sleep, Duration};
 
-        println!("{}", "Watching Claude usage (Ctrl+C to exit)...".bright_cyan());
+        println!(
+            "{}",
+            "Watching Claude usage (Ctrl+C to exit)...".bright_cyan()
+        );
         println!();
 
         loop {
@@ -102,7 +111,10 @@ impl StatusLine {
 
             self.show_status(false).await?;
 
-            println!("\n{}", format!("Updating every {} seconds...", interval).italic());
+            println!(
+                "\n{}",
+                format!("Updating every {} seconds...", interval).italic()
+            );
 
             sleep(Duration::from_secs(interval)).await;
         }
@@ -110,8 +122,8 @@ impl StatusLine {
 
     /// Install status line integration for Claude Code
     pub async fn install_integration() -> Result<()> {
-        use std::fs;
         use dialoguer::Confirm;
+        use std::fs;
 
         let settings_path = crate::config::auth::AuthConfig::claude_settings_path()
             .context("Could not find Claude settings path")?;
@@ -125,17 +137,20 @@ impl StatusLine {
         }
 
         // Read existing settings
-        let settings_content = fs::read_to_string(&settings_path)
-            .context("Failed to read Claude settings")?;
+        let settings_content =
+            fs::read_to_string(&settings_path).context("Failed to read Claude settings")?;
 
-        let mut settings: serde_json::Value = serde_json::from_str(&settings_content)
-            .context("Failed to parse Claude settings")?;
+        let mut settings: serde_json::Value =
+            serde_json::from_str(&settings_content).context("Failed to parse Claude settings")?;
 
         // Add statusline command
         let statusline_cmd = "claude-helper statusline";
 
         if let Some(obj) = settings.as_object_mut() {
-            obj.insert("statusLine".to_string(), serde_json::Value::String(statusline_cmd.to_string()));
+            obj.insert(
+                "statusLine".to_string(),
+                serde_json::Value::String(statusline_cmd.to_string()),
+            );
         }
 
         // Confirm with user
@@ -154,8 +169,7 @@ impl StatusLine {
 
         // Write updated settings
         let updated_content = serde_json::to_string_pretty(&settings)?;
-        fs::write(&settings_path, updated_content)
-            .context("Failed to write Claude settings")?;
+        fs::write(&settings_path, updated_content).context("Failed to write Claude settings")?;
 
         println!("{}", "✓ Status line integration installed!".green());
         println!("\nRestart Claude Code to see the status line.");
@@ -167,11 +181,7 @@ impl StatusLine {
         let filled = (percent as usize * 40) / 100;
         let empty = 40 - filled;
 
-        let bar = format!(
-            "[{}{}]",
-            "█".repeat(filled),
-            "░".repeat(empty)
-        );
+        let bar = format!("[{}{}]", "█".repeat(filled), "░".repeat(empty));
 
         if percent >= 90 {
             bar.bright_red().to_string()
