@@ -641,13 +641,13 @@ Special thanks to:
 - 📖 **Documentation**: [docs/](docs/)
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/Metroseksuaali/Claude-helper/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/Metroseksuaali/Claude-helper/discussions)
-- 📧 **Email**: support@claude-helper.dev (coming soon)
+
 
 ### Stay Updated
 
 - ⭐ **Star** this repo to follow development
 - 👀 **Watch** for release notifications
-- 🐦 **Twitter**: [@ClaudeHelper](https://twitter.com/ClaudeHelper) (coming soon)
+
 
 ### Show Your Support
 
@@ -655,7 +655,7 @@ If Claude Helper saves you time and money:
 - ⭐ Star the repository
 - 🐦 Share on social media
 - 📝 Write a blog post or tutorial
-- ☕ [Buy us a coffee](https://ko-fi.com/claudehelper) (coming soon)
+
 
 ---
 
