@@ -268,6 +268,7 @@ async fn install_claude_integration() -> Result<()> {
     use std::fs;
     use std::path::PathBuf;
     use anyhow::Context;
+    use serde_json::Value;
 
     println!("📦 Installing Claude Code integration...\n");
 
@@ -276,17 +277,64 @@ async fn install_claude_integration() -> Result<()> {
         .context("HOME environment variable not set")?;
     let claude_dir = PathBuf::from(home).join(".claude");
     let commands_dir = claude_dir.join("commands");
+    let settings_path = claude_dir.join("settings.json");
 
     // Create directories
     fs::create_dir_all(&commands_dir)
         .context("Failed to create .claude/commands directory")?;
     println!("✓ Created directory structure");
 
-    // Copy settings.json
-    let settings_content = include_str!("../.claude-templates/settings.json");
-    fs::write(claude_dir.join("settings.json"), settings_content)
+    // Merge settings.json (preserve existing settings)
+    let mut settings: Value = if settings_path.exists() {
+        // Read existing settings
+        let existing_content = fs::read_to_string(&settings_path)
+            .context("Failed to read existing settings.json")?;
+
+        // Backup existing file
+        let backup_path = claude_dir.join("settings.json.backup");
+        fs::write(&backup_path, &existing_content)
+            .context("Failed to create backup of settings.json")?;
+        println!("✓ Backed up existing settings to settings.json.backup");
+
+        serde_json::from_str(&existing_content)
+            .context("Failed to parse existing settings.json")?
+    } else {
+        // Create new settings object
+        serde_json::json!({})
+    };
+
+    // Add/update our settings
+    if let Some(obj) = settings.as_object_mut() {
+        // Add status line
+        obj.insert(
+            "statusLine".to_string(),
+            Value::String("claude-helper statusline".to_string()),
+        );
+
+        // Add hooks (preserving existing hooks if any)
+        let mut hooks = obj.get("hooks")
+            .and_then(|h| h.as_object())
+            .cloned()
+            .unwrap_or_default();
+
+        hooks.insert(
+            "sessionStart".to_string(),
+            Value::String("claude-helper session-start".to_string()),
+        );
+        hooks.insert(
+            "afterResponse".to_string(),
+            Value::String("claude-helper log-usage".to_string()),
+        );
+
+        obj.insert("hooks".to_string(), Value::Object(hooks));
+    }
+
+    // Write updated settings
+    let settings_json = serde_json::to_string_pretty(&settings)
+        .context("Failed to serialize settings")?;
+    fs::write(&settings_path, settings_json)
         .context("Failed to write settings.json")?;
-    println!("✓ Installed settings.json");
+    println!("✓ Updated settings.json (existing settings preserved)");
 
     // Copy command files
     let commands = vec![
@@ -308,7 +356,14 @@ async fn install_claude_integration() -> Result<()> {
     println!("  • /optimize - Get session optimization suggestions");
     println!("  • /token-usage - View detailed token breakdown");
     println!("\nConfiguration: ~/.claude/settings.json");
-    println!("Commands: ~/.claude/commands/\n");
+    println!("Commands: ~/.claude/commands/");
+
+    if settings_path.exists() {
+        println!("\n⚠️  Your existing settings were preserved and backed up to:");
+        println!("   ~/.claude/settings.json.backup\n");
+    } else {
+        println!();
+    }
 
     Ok(())
 }
