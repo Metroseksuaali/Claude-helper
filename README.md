@@ -4,11 +4,20 @@
 [![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=flat&logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**Advanced orchestration and optimization toolkit for Claude Code**
+**Advanced orchestration and optimization toolkit that integrates with Claude Code**
 
-Claude Helper is a high-performance Rust-based tool that supercharges your Claude Code workflow with intelligent agent orchestration, real-time token tracking, and session optimization capabilities.
+Claude Helper supercharges your Claude Code sessions with intelligent features that appear directly in your Claude Code window:
 
-## ✨ Key Features
+- 📊 **Live Status Line**: Real-time token usage displayed at the bottom of Claude Code (updates every 5s)
+- 🎯 **/master Command**: Intelligent agent orchestration with dynamic team creation
+- 🔍 **/optimize Command**: Get instant optimization suggestions during your session
+- 📈 **/token-usage Command**: Detailed token breakdown and cost analysis
+- 🤖 **Session Hooks**: Automatic tracking and learning from every Claude interaction
+- ⚡ **Lightning Fast**: ~8ms execution time (15x faster than Node.js alternatives)
+
+**This tool integrates WITH Claude Code - when you type `claude` in your terminal, Claude Code opens with all these enhanced features available.**
+
+## Features
 
 - 🎯 **Master Coder System** - Intelligent multi-agent orchestration with dynamic team creation
 - 📊 **Real-time Token Tracking** - Live usage monitoring with cost analysis and burn rates
@@ -60,32 +69,40 @@ claude-helper watch
 - **Claude Code** installed OR **Anthropic API key**
 - **Git** (for source installation)
 
-### Quick Install (Recommended)
+### 1. Install Claude Helper
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Metroseksuaali/Claude-helper/main/install.sh | sh
-```
-
-This script automatically:
-- Detects your platform
-- Downloads the latest release
-- Installs to `/usr/local/bin/`
-- Sets up necessary permissions
-
-### From Source
-
-```bash
+# From source (Recommended for now)
 git clone https://github.com/Metroseksuaali/Claude-helper.git
 cd Claude-helper
 cargo build --release
 sudo mv target/release/claude-helper /usr/local/bin/
 ```
 
-### Via Cargo
+### 2. Install Claude Code Integration
 
 ```bash
-cargo install claude-helper
+# This installs the status line, hooks, and slash commands
+claude-helper install-claude-integration
 ```
+
+This will:
+- ✅ Merge settings into `~/.claude/settings.json` (preserves existing settings)
+- ✅ Add `/master`, `/optimize`, and `/token-usage` commands
+- ✅ Configure session hooks for automatic tracking
+
+### 3. Start Claude Code
+
+```bash
+claude
+```
+
+You'll immediately see:
+- **Status line at the bottom**: `[5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr`
+- **Available slash commands**: Type `/master`, `/optimize`, or `/token-usage`
+- **Automatic session tracking**: Every interaction is logged for optimization
+
+That's it! Claude Code is now supercharged.
 
 ## ⚙️ Configuration
 
@@ -155,121 +172,104 @@ min_savings_threshold = 500
 auto_suggest = true
 ```
 
-## 💻 Usage
+## 💻 Claude Code Integration Features
 
-### Basic Commands
+### Status Line (Automatic)
 
-```bash
-# Run with Master Coder orchestration
-claude-helper run "Add login feature with tests and documentation"
+Appears at the bottom of Claude Code window, updating every 5 seconds:
 
-# Specify autonomy mode
-claude-helper run --mode trust "Refactor database layer"
-
-# Interactive mode with TUI
-claude-helper run --mode interactive "Optimize performance"
+```
+[5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr
 ```
 
-### Token Tracking
+Shows:
+- **5-hour usage**: Current rolling 5-hour window (Claude Code limit)
+- **7-day usage**: Current week's total usage
+- **Burn rate**: Cost per hour based on current usage patterns
+
+### Slash Commands
+
+Available in any Claude Code session:
+
+#### `/master` - Master Coder Orchestration
+
+```
+/master "Implement OAuth2 authentication with Google and GitHub providers"
+```
+
+The Master Coder will:
+1. Analyze the task complexity
+2. Create specialized agents (Code Writers, Security Auditor, Test Engineer, etc.)
+3. Orchestrate parallel and sequential execution
+4. Only ask for confirmation on major changes (not every step!)
+5. Show real-time progress
+
+**Autonomy modes:**
+- `conservative` - Asks frequently
+- `balanced` - Approval at important points (default)
+- `trust` - Fully automatic
+- `interactive` - Full control
+
+#### `/optimize` - Session Optimization Analysis
+
+```
+/optimize
+```
+
+Analyzes your current Claude Code session and suggests:
+- ⚡ **Command batching**: Combine sequential bash commands
+- 🔗 **File merging**: Files accessed together frequently
+- 🎯 **Context pruning**: Reduce redundant file reads
+- 📦 **Tool call batching**: More efficient tool usage
+
+Example output:
+```
+Found 3 optimization opportunities:
+
+1. ⚡ Quick Command
+   Combine git operations → Save ~600 tokens
+   Suggestion: git add . && git commit -m "msg" && git push
+
+2. 🔗 File Merge
+   auth.ts + user.ts frequently accessed together → Save ~400 tokens
+   Suggestion: Consider merging into auth-user.ts
+
+3. 🎯 Context Pruning
+   Redundant file reads detected → Save ~900 tokens
+   Suggestion: Use more specific Grep patterns
+```
+
+#### `/token-usage` - Detailed Token Breakdown
+
+```
+/token-usage
+```
+
+Shows comprehensive breakdown:
+- Input/output tokens with costs
+- Cache reads (free) and cache writes (cost)
+- Session duration and messages
+- Average tokens per message
+- Time until hitting limits
+
+### Advanced CLI Usage
+
+While the main value is in Claude Code integration, you can also use standalone commands:
 
 ```bash
-# Quick status check
+# Quick status check outside Claude Code
 claude-helper status
 
-# Detailed breakdown
-claude-helper status --detailed
-
-# Live monitoring
+# Watch usage in real-time
 claude-helper watch
 
-# Configure as Claude Code status line
-claude-helper install-statusline
-```
-
-### Session Analysis
-
-```bash
-# Analyze recent sessions
+# Analyze past sessions
 claude-helper analyze
 
-# Interactive exploration
+# Interactive TUI
 claude-helper tui
 
-# Get optimization report
-claude-helper optimize --last 10
-
-# Export session data
-claude-helper export --format json --output sessions.json
-```
-
-## 🎯 Master Coder System
-
-The Master Coder uses intelligent orchestration to handle complex tasks:
-
-### How It Works
-
-```bash
-# Example: Run a complex task
-claude-helper run "Implement OAuth2 authentication with tests"
-```
-
-**The Master Coder will:**
-
-1. **Analyze** - Understand requirements, complexity, and scope
-2. **Plan** - Determine optimal agent team composition
-3. **Create** - Spawn specialized agents dynamically
-4. **Orchestrate** - Manage dependencies and parallel execution
-5. **Review** - Ensure quality and consistency
-6. **Learn** - Store insights for future improvements
-
-### Autonomy Modes
-
-| Mode | Description | Use Case |
-|------|-------------|----------|
-| `conservative` | Asks for approval frequently | High-stakes changes, learning the tool |
-| `balanced` | Approval at important points | Daily development (default) |
-| `trust` | Fully automatic execution | Routine tasks, refactoring |
-| `interactive` | Full control over every step | Complex debugging, exploration |
-
-**Examples:**
-
-```bash
-# Conservative mode for critical changes
-claude-helper run --mode conservative "Migrate database schema"
-
-# Trust mode for routine work
-claude-helper run --mode trust "Add unit tests to utils module"
-
-# Interactive mode for exploration
-claude-helper run --mode interactive "Investigate performance issues"
-```
-
-### Agent Types
-
-The Master Coder dynamically creates specialized agents based on task requirements:
-
-| Agent Type | Purpose | When Created |
-|------------|---------|--------------|
-| **Code Writer** | Write and modify code | Most tasks |
-| **Architect** | High-level design and planning | Complex features |
-| **Test Engineer** | Comprehensive testing | When tests are needed |
-| **Security Auditor** | Vulnerability scanning | Auth, API, sensitive code |
-| **Documentation Writer** | API docs, README, comments | Documentation tasks |
-| **Debugger** | Bug finding and fixing | When issues are reported |
-| **Performance Optimizer** | Profiling and optimization | Performance tasks |
-| **Migration Specialist** | Database/code migrations | Migration work |
-| **Reviewer** | Code review and quality checks | Before finalizing |
-
-### Advanced Usage
-
-```bash
-# Run with custom agent configuration
-claude-helper run --agents-config custom-agents.yaml "Complex task"
-
-# Set token budget for a task
-claude-helper run --budget 10000 "Quick refactor"
-
-# Review agent performance
+# Agent statistics
 claude-helper agents stats
 
 # List all available agents

@@ -1,13 +1,11 @@
 # Claude Helper - Quick Start Guide
 
-## Installation
+Get Claude Code supercharged in 3 minutes!
 
-### Option 1: Quick Install (Recommended)
-```bash
-curl -fsSL https://raw.githubusercontent.com/Metroseksuaali/Claude-helper/main/install.sh | sh
-```
+## Installation & Setup
 
-### Option 2: Build from Source
+### Step 1: Install Claude Helper
+
 ```bash
 # Prerequisites: Rust 1.70+
 git clone https://github.com/Metroseksuaali/Claude-helper.git
@@ -16,76 +14,167 @@ cargo build --release
 sudo cp target/release/claude-helper /usr/local/bin/
 ```
 
-## First Time Setup
-
-### 1. Configure Authentication
-
-Choose your authentication method:
-
-#### Option A: Claude Code Pro/Max (Recommended)
-If you have Claude Code installed, authentication is automatic!
+### Step 2: Install Claude Code Integration
 
 ```bash
-# Verify it's configured
-claude-helper config show
+# This sets up status line, hooks, and slash commands
+claude-helper install-claude-integration
 ```
 
-#### Option B: API Key
+You'll see:
+```
+📦 Installing Claude Code integration...
+
+✓ Created directory structure
+✓ Installed settings.json
+✓ Installed /master
+✓ Installed /optimize
+✓ Installed /token-usage
+
+✨ Claude Code integration installed successfully!
+
+Next time you run 'claude', you'll have:
+  • Status line showing token usage (updates every 5s)
+  • /master - Run Master Coder orchestration
+  • /optimize - Get session optimization suggestions
+  • /token-usage - View detailed token breakdown
+
+Configuration: ~/.claude/settings.json
+Commands: ~/.claude/commands/
+```
+
+### Step 3: Start Claude Code
+
+```bash
+claude
+```
+
+You'll immediately see:
+- **Status line at bottom**: `[5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr`
+- **Three new slash commands**: `/master`, `/optimize`, `/token-usage`
+- **Automatic tracking**: Every interaction logged for optimization
+
+That's it! You're ready to go.
+
+## Authentication
+
+Claude Helper works with:
+
+### Claude Code Pro/Max (Recommended)
+If you have Claude Code installed, authentication is automatic!
+
+### Claude API Key
 If you have an Anthropic API key:
 
 ```bash
 claude-helper config set-api-key
-# Follow the prompts to enter your API key
+# Follow the prompts
 ```
 
-### 2. Verify Installation
+## Using Claude Helper in Claude Code
 
-```bash
-# Check version
-claude-helper --version
-# Should output: claude-helper 0.1.0
+### Status Line (Automatic)
 
-# Check available commands
-claude-helper --help
+After installation, the status line appears automatically at the bottom:
 
-# Test database creation
-claude-helper agents list
+```
+[5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr
 ```
 
-## Basic Usage
+It updates every 5 seconds showing:
+- **5h**: Current rolling 5-hour window (Claude Code's rate limit)
+- **7d**: Current week's total usage
+- **Burn rate**: Cost per hour based on usage patterns
+
+### Slash Command: /master
+
+Run Master Coder orchestration directly in Claude Code:
+
+```
+/master "Implement OAuth2 authentication with Google and GitHub providers"
+```
+
+The Master Coder will:
+1. ✅ Analyze task complexity
+2. ✅ Create specialized agent team (Code Writers, Security Auditor, Test Engineer, etc.)
+3. ✅ Execute with parallel/sequential orchestration
+4. ✅ Only ask for confirmation on major changes (not every step!)
+5. ✅ Show real-time progress
+
+**Autonomy modes** (use with `/master --mode <mode>`):
+- `conservative` - Frequent confirmations
+- `balanced` - Smart gates at important points (default)
+- `trust` - Fully automatic execution
+- `interactive` - Full control every step
+
+Example:
+```
+/master --mode trust "Refactor database layer with comprehensive tests"
+```
+
+### Slash Command: /optimize
+
+Get instant optimization suggestions for your current session:
+
+```
+/optimize
+```
+
+Output example:
+```
+Found 3 optimization opportunities:
+
+1. ⚡ Quick Command
+   Combine git operations → Save ~600 tokens
+   Suggestion: git add . && git commit -m "msg" && git push
+
+2. 🔗 File Merge
+   auth.ts + user.ts accessed together → Save ~400 tokens
+   Suggestion: Consider merging into auth-user.ts
+
+3. 🎯 Context Pruning
+   Redundant file reads → Save ~900 tokens
+   Suggestion: Use more specific Grep patterns
+```
+
+The analyzer detects:
+- Command batching opportunities
+- Files frequently accessed together
+- Redundant tool calls
+- Context optimization
+
+### Slash Command: /token-usage
+
+View detailed token breakdown:
+
+```
+/token-usage
+```
+
+Shows:
+- Input/output tokens with costs
+- Cache reads (free) and cache writes (cost)
+- Session duration and message count
+- Average tokens per message
+- Burn rate and time until limits
+
+## Standalone CLI Usage
+
+You can also use claude-helper outside Claude Code:
 
 ### Check Token Usage
 
 ```bash
-# Detailed view
+# Quick status check
 claude-helper status
 
-# Compact format (for status bars)
-claude-helper statusline
+# Watch in real-time
+claude-helper watch
 ```
 
-Output:
-```
-Current 5-Hour Block:
-  [████████████████████████████░░░░░░░░░░░░]
-  Used: 14000 / 20000 tokens (70%)
-  Time remaining: 120 minutes
-
-7-Day Total:
-  [██████████████████████████░░░░░░░░░░░░░░]
-  Used: 130000 / 200000 tokens (65%)
-
-Cost Information:
-  Burn rate: $0.15/hour
-  Estimated 7-day cost: $1.17
-```
-
-### Master Coder Orchestration
-
-Run complex tasks with intelligent agent coordination:
+### Run Master Coder from CLI
 
 ```bash
-# Basic usage
 claude-helper run "Implement OAuth2 authentication"
 
 # With options
@@ -93,16 +182,10 @@ claude-helper run \
   --mode balanced \
   --max-agents 5 \
   --token-budget 30000 \
-  "Add login feature with tests and documentation"
+  "Add login with tests and docs"
 ```
 
-**Autonomy Modes:**
-- `conservative` - Asks for approval frequently
-- `balanced` - Approval gates at important points (default)
-- `trust` - Fully automatic
-- `interactive` - Control every step
-
-### Analyze and Optimize Sessions
+### Analyze Past Sessions
 
 ```bash
 # Analyze recent sessions
@@ -110,9 +193,6 @@ claude-helper analyze --last 10
 
 # Get optimization suggestions
 claude-helper optimize --last 5
-
-# Analyze specific session
-claude-helper optimize --session <session-id>
 ```
 
 ### Agent Management
@@ -121,36 +201,18 @@ claude-helper optimize --session <session-id>
 # List available agent types
 claude-helper agents list
 
-# View agent statistics
+# View statistics
 claude-helper agents stats
 
-# See agent execution history
+# Show execution history
 claude-helper agents history --last 20
 ```
 
 ### Interactive TUI
 
 ```bash
-# Open interactive dashboard
 claude-helper tui
-
-# Use arrow keys to navigate tabs:
-# - Usage: Token tracking
-# - Optimizations: Suggestions
-# - Agent History: Recent executions
-
-# Press 'q' to quit
 ```
-
-## Integration with Claude Code
-
-Install status line integration:
-
-```bash
-claude-helper install-statusline
-```
-
-This updates your `~/.claude/settings.json` to show real-time token usage in Claude Code's status bar.
 
 ## Configuration
 

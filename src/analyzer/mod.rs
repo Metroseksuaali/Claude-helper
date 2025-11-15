@@ -7,6 +7,7 @@ use anyhow::Result;
 use colored::Colorize;
 use optimizer::Optimizer;
 use session_parser::SessionParser;
+use tracing::{info, debug};
 
 // Re-export for external use
 pub use optimizer::Optimization;
@@ -194,5 +195,59 @@ impl SessionAnalyzer {
         };
 
         format!("{} {}", emoji, label)
+    }
+
+    /// Start a new session (called from sessionStart hook)
+    pub async fn start_session(&self) -> Result<()> {
+        // Find the most recent session
+        let sessions = self.parser.find_recent_sessions(1)?;
+
+        if let Some(session_path) = sessions.first() {
+            let session_id = session_path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown");
+            info!("📝 Session started: {}", session_id);
+            debug!("Session will be tracked in ~/.claude/sessions/{}.jsonl", session_id);
+        } else {
+            debug!("No active session found yet");
+        }
+
+        Ok(())
+    }
+
+    /// Log an interaction (called from afterResponse hook)
+    pub async fn log_interaction(&self) -> Result<()> {
+        // Analyze the most recent session for optimization opportunities
+        let sessions = self.parser.find_recent_sessions(1)?;
+
+        if let Some(session_path) = sessions.first() {
+            let session_id = session_path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown");
+            debug!("Analyzing interaction in session: {}", session_id);
+
+            // Parse the session to check for optimizations
+            if let Ok(session_data) = self.parser.parse_session(session_path) {
+                if let Ok(optimizations) = self.optimizer.analyze(&session_data) {
+                    // Save any significant optimizations to database
+                    for opt in &optimizations {
+                        if opt.estimated_savings >= 500 {
+                            if let Err(e) = self.db.save_optimization(opt).await {
+                                debug!("Failed to save optimization: {}", e);
+                            } else {
+                                debug!(
+                                    "💡 Optimization detected: {} (saves ~{} tokens)",
+                                    opt.title, opt.estimated_savings
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }

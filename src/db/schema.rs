@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS optimizations (
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     estimated_savings INTEGER NOT NULL,
+    examples TEXT,
     applied BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

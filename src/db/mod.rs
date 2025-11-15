@@ -1,6 +1,7 @@
 mod schema;
 
 use crate::agents::AgentCapability;
+use crate::analyzer::Optimization;
 use crate::config::Config;
 use crate::master::orchestrator::{ExecutionPlan, ExecutionResult};
 use crate::master::planner::TaskAnalysis;
@@ -283,6 +284,27 @@ impl Database {
         }
 
         Ok(tasks)
+    }
+
+    /// Save an optimization suggestion to the database
+    pub async fn save_optimization(&self, opt: &Optimization) -> Result<()> {
+        let opt_type = format!("{:?}", opt.opt_type);
+        let examples_json = serde_json::to_string(&opt.examples)?;
+
+        sqlx::query(
+            "INSERT INTO optimizations (optimization_type, title, description, estimated_savings, examples, applied)
+             VALUES (?, ?, ?, ?, ?, 0)"
+        )
+        .bind(opt_type)
+        .bind(&opt.title)
+        .bind(&opt.description)
+        .bind(opt.estimated_savings as i64)
+        .bind(examples_json)
+        .execute(&self.pool)
+        .await
+        .context("Failed to save optimization")?;
+
+        Ok(())
     }
 }
 

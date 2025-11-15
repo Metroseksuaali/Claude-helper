@@ -84,8 +84,15 @@ enum Commands {
         action: ConfigAction,
     },
 
-    /// Install status line integration for Claude Code
-    InstallStatusline,
+    /// Install complete Claude Code integration (status line + hooks + commands)
+    #[command(alias = "install-statusline")]
+    InstallClaudeIntegration,
+
+    /// Session start hook (called by Claude Code on session start)
+    SessionStart,
+
+    /// Log usage hook (called by Claude Code after each response)
+    LogUsage,
 
     /// Agent management and statistics
     Agents {
@@ -201,8 +208,16 @@ async fn main() -> Result<()> {
             handle_config_action(action, &config).await?;
         }
 
-        Commands::InstallStatusline => {
-            StatusLine::install_integration().await?;
+        Commands::InstallClaudeIntegration => {
+            install_claude_integration().await?;
+        }
+
+        Commands::SessionStart => {
+            handle_session_start(&config).await?;
+        }
+
+        Commands::LogUsage => {
+            handle_log_usage(&config).await?;
         }
 
         Commands::Agents { action } => {
@@ -247,5 +262,169 @@ async fn handle_agent_action(action: AgentAction, config: &Config) -> Result<()>
             manager.show_history(last).await?;
         }
     }
+    Ok(())
+}
+
+async fn install_claude_integration() -> Result<()> {
+    use std::fs;
+    use anyhow::Context;
+    use serde_json::Value;
+
+    println!("📦 Installing Claude Code integration...\n");
+
+    // Get home directory (platform-independent)
+    let home = dirs::home_dir()
+        .context("Could not find home directory")?;
+    let claude_dir = home.join(".claude");
+    let commands_dir = claude_dir.join("commands");
+    let settings_path = claude_dir.join("settings.json");
+
+    // Create directories
+    fs::create_dir_all(&commands_dir)
+        .context("Failed to create .claude/commands directory")?;
+    println!("✓ Created directory structure");
+
+    // Merge settings.json (preserve existing settings)
+    let mut settings: Value = if settings_path.exists() {
+        // Read existing settings
+        let existing_content = fs::read_to_string(&settings_path)
+            .context("Failed to read existing settings.json")?;
+
+        // Backup existing file
+        let backup_path = claude_dir.join("settings.json.backup");
+        fs::write(&backup_path, &existing_content)
+            .context("Failed to create backup of settings.json")?;
+        println!("✓ Backed up existing settings to settings.json.backup");
+
+        serde_json::from_str(&existing_content)
+            .context("Failed to parse existing settings.json")?
+    } else {
+        // Create new settings object
+        serde_json::json!({})
+    };
+
+    // Add/update our settings
+    if let Some(obj) = settings.as_object_mut() {
+        // Add status line
+        obj.insert(
+            "statusLine".to_string(),
+            Value::String("claude-helper statusline".to_string()),
+        );
+
+        // Add hooks (preserving existing hooks if any)
+        let mut hooks = obj.get("hooks")
+            .and_then(|h| h.as_object())
+            .cloned()
+            .unwrap_or_default();
+
+        hooks.insert(
+            "sessionStart".to_string(),
+            Value::String("claude-helper session-start".to_string()),
+        );
+        hooks.insert(
+            "afterResponse".to_string(),
+            Value::String("claude-helper log-usage".to_string()),
+        );
+
+        obj.insert("hooks".to_string(), Value::Object(hooks));
+    }
+
+    // Write updated settings
+    let settings_json = serde_json::to_string_pretty(&settings)
+        .context("Failed to serialize settings")?;
+    fs::write(&settings_path, settings_json)
+        .context("Failed to write settings.json")?;
+    println!("✓ Updated settings.json (existing settings preserved)");
+
+    // Copy command files
+    let commands = vec![
+        ("master.md", include_str!("../.claude-templates/commands/master.md")),
+        ("optimize.md", include_str!("../.claude-templates/commands/optimize.md")),
+        ("token-usage.md", include_str!("../.claude-templates/commands/token-usage.md")),
+    ];
+
+    for (filename, content) in commands {
+        fs::write(commands_dir.join(filename), content)
+            .with_context(|| format!("Failed to write {}", filename))?;
+        println!("✓ Installed /{}",  filename.trim_end_matches(".md"));
+    }
+
+    println!("\n✨ Claude Code integration installed successfully!\n");
+    println!("Next time you run 'claude', you'll have:");
+    println!("  • Status line showing token usage (updates every 5s)");
+    println!("  • /master - Run Master Coder orchestration");
+    println!("  • /optimize - Get session optimization suggestions");
+    println!("  • /token-usage - View detailed token breakdown");
+    println!("\nConfiguration: ~/.claude/settings.json");
+    println!("Commands: ~/.claude/commands/");
+
+    if settings_path.exists() {
+        println!("\n⚠️  Your existing settings were preserved and backed up to:");
+        println!("   ~/.claude/settings.json.backup\n");
+    } else {
+        println!();
+    }
+
+    Ok(())
+}
+
+async fn handle_session_start(config: &Config) -> Result<()> {
+    use std::fs::OpenOptions;
+    use std::io::Write;
+    use chrono::Utc;
+
+    // Log session start to database
+    let db_path = Config::db_file()?;
+    let session_log = db_path.parent().unwrap().join("sessions.log");
+
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(session_log)?;
+
+    writeln!(file, "[{}] Session started", Utc::now().to_rfc3339())?;
+
+    // Initialize session tracking
+    let analyzer = SessionAnalyzer::new(config.clone()).await?;
+    analyzer.start_session().await?;
+
+    Ok(())
+}
+
+async fn handle_log_usage(config: &Config) -> Result<()> {
+    use std::fs::OpenOptions;
+    use std::io::Write;
+    use chrono::Utc;
+
+    // Get current usage and log it
+    let statusline = StatusLine::new(config.clone()).await?;
+    let usage = statusline.get_current_usage().await?;
+
+    // Log to file
+    let db_path = Config::db_file()?;
+    let usage_log = db_path.parent().unwrap().join("usage.log");
+
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(usage_log)?;
+
+    writeln!(
+        file,
+        "[{}] 5h: {}/{} ({}%), 7d: {}/{} ({}%), Burn: ${:.2}/hr",
+        Utc::now().to_rfc3339(),
+        usage.five_hour_used,
+        usage.five_hour_limit,
+        usage.five_hour_percent,
+        usage.seven_day_used,
+        usage.seven_day_limit,
+        usage.seven_day_percent,
+        usage.burn_rate_per_hour
+    )?;
+
+    // Analyze for optimization opportunities
+    let analyzer = SessionAnalyzer::new(config.clone()).await?;
+    analyzer.log_interaction().await?;
+
     Ok(())
 }
