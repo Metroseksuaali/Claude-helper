@@ -113,21 +113,23 @@ impl TaskPlanner {
             "tests",
         ];
 
-        // TODO: Convert to lowercase for case-insensitive matching
+        // Convert to lowercase for case-insensitive matching
+        let task_lower = task.to_lowercase();
+
         for keyword in &high_complexity_keywords {
-            if task.contains(keyword) {
+            if task_lower.contains(keyword) {
                 complexity += 2;
             }
         }
 
         for keyword in &medium_complexity_keywords {
-            if task.contains(keyword) {
+            if task_lower.contains(keyword) {
                 complexity += 1;
             }
         }
 
         // Check for multiple requirements
-        if task.contains(" and ") || task.contains(" with ") {
+        if task_lower.contains(" and ") || task_lower.contains(" with ") {
             complexity += 1;
         }
 
@@ -138,9 +140,9 @@ impl TaskPlanner {
         // TODO: Add tests for multiple capability detection
         // TODO: Add tests for default CodeWriting fallback
         // TODO: Add tests for edge cases: empty input should return default
-        // TODO: Add tests for case insensitive matching
 
         let mut capabilities = Vec::new();
+        let task_lower = task.to_lowercase();
 
         let capability_keywords = vec![
             (
@@ -189,7 +191,7 @@ impl TaskPlanner {
 
         for (capability, keywords) in capability_keywords {
             for keyword in keywords {
-                if task.contains(keyword) {
+                if task_lower.contains(keyword) {
                     if !capabilities.contains(&capability) {
                         capabilities.push(capability);
                     }
@@ -589,14 +591,15 @@ mod tests {
     #[test]
     fn test_estimate_complexity_case_sensitivity() {
         let planner = create_test_planner();
-        // Note: Current implementation is case-sensitive (TODO to fix)
+        // Test case-insensitive matching
         let lower = planner.estimate_complexity("refactor code");
         let upper = planner.estimate_complexity("REFACTOR code");
+        let mixed = planner.estimate_complexity("ReFaCtOr code");
 
-        // For now, uppercase won't match (this is a known issue)
-        // When case-insensitive matching is implemented, this test should be updated
+        // All variations should match the keyword
         assert_eq!(lower, 5); // Base + refactor
-        assert_eq!(upper, 3); // Base only (doesn't match uppercase)
+        assert_eq!(upper, 5); // Base + REFACTOR (matches "refactor")
+        assert_eq!(mixed, 5); // Base + ReFaCtOr (matches "refactor")
     }
 
     #[test]
