@@ -3,29 +3,55 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=flat&logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Status: Alpha](https://img.shields.io/badge/Status-Alpha-yellow.svg)](https://github.com/Metroseksuaali/Claude-helper)
 
 **Advanced orchestration and optimization toolkit that integrates with Claude Code**
 
 Claude Helper supercharges your Claude Code sessions with intelligent features that appear directly in your Claude Code window:
 
 - 📊 **Live Status Line**: Real-time token usage displayed at the bottom of Claude Code (updates every 5s)
-- 🎯 **/master Command**: Intelligent agent orchestration with dynamic team creation
-- 🔍 **/optimize Command**: Get instant optimization suggestions during your session
+- 🔍 **/optimize Command**: Analyze your session and get instant optimization suggestions
 - 📈 **/token-usage Command**: Detailed token breakdown and cost analysis
 - 🤖 **Session Hooks**: Automatic tracking and learning from every Claude interaction
 - ⚡ **Lightning Fast**: ~8ms execution time (15x faster than Node.js alternatives)
+- 💾 **SQLite Database**: Stores session history and optimization suggestions
+
+**⚠️ Current Status**: Alpha - Core infrastructure implemented, API integration in progress
+
+## What Works Now ✅
+
+### Fully Functional
+- ✅ **Configuration System**: TOML-based config with sensible defaults
+- ✅ **Database Layer**: SQLite storage for sessions, agents, and optimizations
+- ✅ **Session Parser**: Parses Claude Code JSONL session files
+- ✅ **Optimization Detection**: 6 optimization strategies (bash chains, file patterns, etc.)
+- ✅ **Slash Commands**: `/optimize` and `/token-usage` commands in Claude Code
+- ✅ **Session Hooks**: Automatic analysis after each Claude response
+- ✅ **CLI Tools**: status, analyze, config management
+- ✅ **Cross-Platform**: Works on Linux, macOS, Windows (via WSL)
+
+### In Development 🚧
+- 🚧 **Master Coder System**: Multi-agent orchestration (structure implemented, testing in progress)
+- 🚧 **Real-time Token Tracking**: API endpoint needs verification
+- 🚧 **TUI Dashboard**: Interactive terminal UI (shows mock data currently)
+- 🚧 **Agent Execution**: Claude API integration needs live testing
 
 **This tool integrates WITH Claude Code - when you type `claude` in your terminal, Claude Code opens with all these enhanced features available.**
 
 ## Features
 
-- 🎯 **Master Coder System** - Intelligent multi-agent orchestration with dynamic team creation
-- 📊 **Real-time Token Tracking** - Live usage monitoring with cost analysis and burn rates
+### Core Features (Ready to Use)
 - 🔍 **Session Analysis** - AI-powered optimization detection to reduce token waste
-- 🎨 **Interactive TUI** - Beautiful terminal UI for monitoring and control
+- 💾 **Database Storage** - SQLite-backed session history and optimization tracking
 - ⚡ **Lightning Fast** - ~8ms execution time (15x faster than Node.js alternatives)
-- 🔐 **Multiple Auth Methods** - Works with Claude Code or API keys
-- 🧠 **Learning System** - Improves from past sessions stored in SQLite
+- 🔐 **Multiple Auth Methods** - Supports Claude Code sessions or API keys
+- 📋 **Optimization Strategies** - Detects bash chains, file patterns, tool call batching, context pruning
+- 🛠️ **CLI Tools** - Complete command-line interface for analysis and configuration
+
+### Advanced Features (In Progress)
+- 🎯 **Master Coder System** - Multi-agent orchestration (structure complete, needs testing)
+- 📊 **Real-time Token Tracking** - Live usage monitoring (API endpoint verification needed)
+- 🎨 **Interactive TUI** - Terminal UI dashboard (implemented, using mock data)
 
 ## 📋 Table of Contents
 
@@ -45,21 +71,29 @@ Claude Helper supercharges your Claude Code sessions with intelligent features t
 
 ## 🚀 Quick Start
 
-Get started in under 2 minutes:
+Get started in under 5 minutes:
 
 ```bash
-# Install
-curl -fsSL https://raw.githubusercontent.com/Metroseksuaali/Claude-helper/main/install.sh | sh
+# 1. Build from source (recommended for alpha)
+git clone https://github.com/Metroseksuaali/Claude-helper.git
+cd Claude-helper
+cargo build --release
+sudo mv target/release/claude-helper /usr/local/bin/
 
-# Check status
-claude-helper status
+# 2. Install Claude Code integration
+claude-helper install-claude-integration
 
-# Run your first task
-claude-helper run "Add comprehensive error handling to main.rs"
+# 3. Analyze your Claude Code sessions
+claude-helper analyze
 
-# Watch real-time usage
-claude-helper watch
+# 4. Get optimization suggestions
+claude-helper optimize
+
+# 5. Check configuration
+claude-helper config show
 ```
+
+**Note**: Some features (Master Coder, real-time tracking) are still in development. See "What Works Now" above.
 
 ## 📦 Installation
 
@@ -191,26 +225,7 @@ Shows:
 
 Available in any Claude Code session:
 
-#### `/master` - Master Coder Orchestration
-
-```
-/master "Implement OAuth2 authentication with Google and GitHub providers"
-```
-
-The Master Coder will:
-1. Analyze the task complexity
-2. Create specialized agents (Code Writers, Security Auditor, Test Engineer, etc.)
-3. Orchestrate parallel and sequential execution
-4. Only ask for confirmation on major changes (not every step!)
-5. Show real-time progress
-
-**Autonomy modes:**
-- `conservative` - Asks frequently
-- `balanced` - Approval at important points (default)
-- `trust` - Fully automatic
-- `interactive` - Full control
-
-#### `/optimize` - Session Optimization Analysis
+#### `/optimize` - Session Optimization Analysis ✅
 
 ```
 /optimize
@@ -239,7 +254,7 @@ Found 3 optimization opportunities:
    Suggestion: Use more specific Grep patterns
 ```
 
-#### `/token-usage` - Detailed Token Breakdown
+#### `/token-usage` - Detailed Token Breakdown ✅
 
 ```
 /token-usage
@@ -252,62 +267,56 @@ Shows comprehensive breakdown:
 - Average tokens per message
 - Time until hitting limits
 
+**Note**: Currently uses Claude Code session data. Real-time API tracking in development.
+
+#### `/master` - Master Coder Orchestration 🚧
+
+```
+/master "Your complex task here"
+```
+
+**Status**: Command structure implemented, but multi-agent orchestration is still in testing.
+
+Planned features:
+- Task complexity analysis
+- Dynamic agent team creation
+- Parallel and sequential execution
+- Multiple autonomy modes (conservative, balanced, trust, interactive)
+
+**Current recommendation**: Use standard Claude Code for complex tasks until this feature is fully tested.
+
 ### Advanced CLI Usage
 
 While the main value is in Claude Code integration, you can also use standalone commands:
 
 ```bash
-# Quick status check outside Claude Code
-claude-helper status
-
-# Watch usage in real-time
-claude-helper watch
-
-# Analyze past sessions
+# Analyze recent Claude Code sessions (✅ Working)
 claude-helper analyze
 
-# Interactive TUI
-claude-helper tui
+# Get optimization suggestions (✅ Working)
+claude-helper optimize
 
-# Agent statistics
+# View/edit configuration (✅ Working)
+claude-helper config show
+claude-helper config edit
+
+# Database operations (✅ Working)
 claude-helper agents stats
+claude-helper agents history
 
-# List all available agents
-claude-helper agents list
+# Status line (🚧 In development - API endpoint needs verification)
+claude-helper status
+claude-helper watch
+
+# Interactive TUI (🚧 In development - shows mock data)
+claude-helper tui
 ```
 
 ## 📊 Features in Detail
 
-### Real-time Token Tracking
+### Session Analysis ✅
 
-Monitor your Claude Code usage in real-time:
-
-```bash
-# Quick status
-$ claude-helper status
-📊 Token Usage: 45.2K / 100K (45%)
-💰 Cost: $0.68 / $1.50
-🔥 Burn rate: 2.3K tokens/hour
-⏱️  Session: 2h 15m
-
-# Detailed breakdown
-$ claude-helper status --detailed
-┌─────────────────────────────────────────┐
-│ Token Usage Breakdown                   │
-├─────────────────────────────────────────┤
-│ Input tokens:     32,150 ($0.48)       │
-│ Output tokens:    13,050 ($0.20)       │
-│ Cache reads:       8,420 (free)        │
-│ Cache writes:      4,210 ($0.05)       │
-├─────────────────────────────────────────┤
-│ Total:           45,200 ($0.68)         │
-│ Remaining:       54,800 (55%)           │
-└─────────────────────────────────────────┘
-```
-
-### Session Analysis
-
-AI-powered analysis finds optimization opportunities:
+AI-powered analysis finds optimization opportunities in your Claude Code sessions:
 
 ```bash
 $ claude-helper analyze
@@ -331,7 +340,7 @@ Found 3 optimization opportunities:
 💡 Total potential savings: 7,400 tokens ($0.11/day)
 ```
 
-### Interactive TUI
+### Interactive TUI 🚧
 
 Beautiful terminal interface for monitoring:
 
@@ -339,12 +348,18 @@ Beautiful terminal interface for monitoring:
 $ claude-helper tui
 ```
 
-Features:
-- Live token usage graphs
-- Session history browsing
-- Agent activity monitoring
-- Optimization suggestions
-- Keyboard shortcuts for quick actions
+**Status**: UI implemented, currently displays mock data while API integration is in progress.
+
+Implemented features:
+- Three tab layout (Usage, Optimizations, Agent History)
+- Keyboard navigation (arrows, q to quit, r to refresh)
+- Responsive terminal UI using Ratatui
+
+Planned features:
+- Live token usage graphs (from real API)
+- Real session history browsing
+- Real-time agent activity monitoring
+- Database-backed optimization suggestions
 
 ## 🖥️ Platform Support
 
@@ -464,18 +479,34 @@ If you encounter issues:
 
 ### General Questions
 
+**Q: What's the current status of this project?**
+A: Alpha (v0.1.0). Core infrastructure is complete and working:
+- ✅ Session analysis and optimization detection
+- ✅ Database storage and CLI tools
+- ✅ Claude Code integration (slash commands, hooks)
+- 🚧 Real-time tracking and Master Coder need more testing
+
 **Q: Do I need Claude Code installed?**
-A: No, you can use Claude Helper with just an Anthropic API key. However, Claude Code integration provides the best experience.
+A: For session analysis features (which work now), yes. The tool parses Claude Code session files from `~/.claude/sessions/`. API key mode is partially implemented but needs more testing.
 
 **Q: Does this cost money?**
-A: Claude Helper is free and open-source. You only pay for Claude API usage (either through Claude Code subscription or direct API usage).
+A: Claude Helper is free and open-source. You only pay for Claude API usage (through your Claude Code subscription). The tool itself adds no extra costs.
 
-**Q: How is this different from using Claude Code directly?**
-A: Claude Helper adds:
-- Multi-agent orchestration for complex tasks
-- Token usage tracking and optimization
-- Session analysis and cost insights
-- Automation and workflow improvements
+**Q: What actually works right now?**
+A: See the "What Works Now ✅" section at the top. In summary:
+- Session parsing and analysis ✅
+- Optimization detection ✅
+- Database and CLI tools ✅
+- Claude Code slash commands ✅
+- Real-time tracking (needs API endpoint verification) 🚧
+- Master Coder orchestration (needs testing) 🚧
+
+**Q: Can I use this in production?**
+A: Not recommended yet. This is alpha software. Use it for:
+- Analyzing your past Claude Code sessions
+- Getting optimization suggestions
+- Exploring the codebase
+Wait for v0.2.0 for production-ready features.
 
 **Q: Can I use this with other AI assistants?**
 A: Currently, Claude Helper is designed specifically for Claude Code/API. Support for other models may be added in the future.
@@ -529,29 +560,45 @@ A: The task will pause and ask for approval to continue or stop gracefully.
 
 ## 🗺️ Roadmap
 
-### ✅ Completed
+### ✅ Completed (v0.1.0-alpha)
 
 - [x] Project structure and build system
-- [x] Basic CLI interface
-- [x] Token usage tracking foundation
-- [x] Quick start documentation
+- [x] CLI interface with clap
+- [x] Configuration system with TOML support
+- [x] SQLite database layer with migrations
+- [x] Session parser for Claude Code JSONL files
+- [x] Optimization detection (6 strategies)
+- [x] Slash commands for Claude Code integration
+- [x] Session hooks (start, afterResponse)
+- [x] Agent system architecture
+- [x] Cross-platform support (Linux, macOS, Windows/WSL)
+- [x] Comprehensive documentation
 
-### 🚧 In Progress (v0.1.0)
+### 🚧 In Progress (v0.2.0)
 
-- [ ] Configuration system with TOML support
-- [ ] Master Coder orchestration engine
-- [ ] Dynamic agent creation and management
-- [ ] Status line integration for Claude Code
-- [ ] Session analyzer with optimization detection
+**Priority: Testing & Stabilization**
+- [ ] Verify Claude usage API endpoint
+- [ ] Test Master Coder orchestration end-to-end
+- [ ] Wire TUI to real database queries
+- [ ] Fix critical bugs from TODO.md (division by zero, etc.)
+- [ ] Add unit tests for core modules
+- [ ] Test with real Claude Code sessions
 
-### 📅 Planned (v0.2.0)
+**Priority: Core Features**
+- [ ] Real-time token tracking (non-mock)
+- [ ] Cost calculation accuracy (input/output split)
+- [ ] Session time remaining calculation
+- [ ] Agent execution testing
 
-- [ ] Interactive TUI with live graphs
-- [ ] SQLite history database
-- [ ] Learning from past sessions
+### 📅 Planned (v0.3.0+)
+
+- [ ] Master Coder full testing and refinement
+- [ ] Learning from past sessions (ML-based optimization suggestions)
 - [ ] Custom agent templates (YAML)
 - [ ] Desktop notifications
 - [ ] Multi-project support
+- [ ] Performance optimizations
+- [ ] Comprehensive test coverage (>60%)
 
 ### 🔮 Future (v1.0.0+)
 
@@ -562,7 +609,8 @@ A: The task will pause and ask for approval to continue or stop gracefully.
 - [ ] Team collaboration features
 - [ ] Advanced cost analytics and budgeting
 - [ ] Integration with CI/CD pipelines
-- [ ] Native Windows support
+
+**Current Focus**: Stabilizing existing features and fixing known issues before adding new functionality.
 
 [View detailed roadmap →](https://github.com/Metroseksuaali/Claude-helper/projects)
 
