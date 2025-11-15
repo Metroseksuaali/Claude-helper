@@ -85,6 +85,7 @@ enum Commands {
     },
 
     /// Install complete Claude Code integration (status line + hooks + commands)
+    #[command(alias = "install-statusline")]
     InstallClaudeIntegration,
 
     /// Session start hook (called by Claude Code on session start)
