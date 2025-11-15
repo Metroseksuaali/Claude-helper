@@ -192,4 +192,9 @@ impl StatusLine {
 
         Ok(())
     }
+
+    /// Get current usage (for hooks)
+    pub async fn get_current_usage(&self) -> Result<usage_tracker::Usage> {
+        self.tracker.get_usage().await
+    }
 }

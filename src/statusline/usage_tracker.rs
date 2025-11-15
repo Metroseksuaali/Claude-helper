@@ -2,8 +2,9 @@ use anyhow::{Context, Result};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use crate::config::Config;
+use crate::cache::Cache;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Usage {
     pub five_hour_used: usize,
     pub five_hour_limit: usize,
@@ -41,6 +42,7 @@ struct BlockUsage {
 pub struct UsageTracker {
     config: Config,
     client: Client,
+    cache: Cache,
 }
 
 impl UsageTracker {
@@ -50,18 +52,30 @@ impl UsageTracker {
             .build()
             .context("Failed to create HTTP client")?;
 
-        Ok(Self { config, client })
+        let cache = Cache::new()?;
+
+        Ok(Self { config, client, cache })
     }
 
     pub async fn get_usage(&self) -> Result<Usage> {
+        // Try to get from cache first (5 second TTL)
+        if let Ok(Some(usage)) = self.cache.get::<Usage>("usage") {
+            return Ok(usage);
+        }
+
         // Try to fetch from Claude API
-        match self.fetch_from_api().await {
-            Ok(usage) => Ok(usage),
+        let usage = match self.fetch_from_api().await {
+            Ok(usage) => usage,
             Err(_) => {
                 // Fallback to mock data for testing
-                Ok(self.mock_usage())
+                self.mock_usage()
             }
-        }
+        };
+
+        // Cache the result for 5 seconds
+        let _ = self.cache.set("usage", usage.clone(), 5);
+
+        Ok(usage)
     }
 
     async fn fetch_from_api(&self) -> Result<Usage> {
