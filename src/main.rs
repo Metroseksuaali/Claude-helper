@@ -272,10 +272,10 @@ async fn install_claude_integration() -> Result<()> {
 
     println!("📦 Installing Claude Code integration...\n");
 
-    // Get home directory
-    let home = std::env::var("HOME")
-        .context("HOME environment variable not set")?;
-    let claude_dir = PathBuf::from(home).join(".claude");
+    // Get home directory (platform-independent)
+    let home = dirs::home_dir()
+        .context("Could not find home directory")?;
+    let claude_dir = home.join(".claude");
     let commands_dir = claude_dir.join("commands");
     let settings_path = claude_dir.join("settings.json");
 

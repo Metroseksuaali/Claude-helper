@@ -62,5 +62,7 @@ Found 3 optimization opportunities:
 ## Execution
 
 ```bash
-claude-helper optimize --session current
+claude-helper optimize
 ```
+
+This analyzes your recent sessions (last 10 by default) to find patterns and suggest optimizations.
