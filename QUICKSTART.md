@@ -1,6 +1,21 @@
 # Claude Helper - Quick Start Guide
 
-Get Claude Code supercharged in 3 minutes!
+Get Claude Code supercharged in 5 minutes!
+
+**Status**: Alpha v0.1.0 - Core features working, some features still in development
+
+## What Works Now
+
+✅ **Ready to use:**
+- Session analysis and optimization detection
+- `/optimize` and `/token-usage` slash commands
+- Database storage and CLI tools
+- Session hooks for automatic tracking
+
+🚧 **In development:**
+- Master Coder orchestration (structure complete, needs testing)
+- Real-time token tracking (API endpoint verification needed)
+- TUI dashboard (shows mock data currently)
 
 ## Installation & Setup
 
@@ -26,7 +41,7 @@ You'll see:
 📦 Installing Claude Code integration...
 
 ✓ Created directory structure
-✓ Installed settings.json
+✓ Updated settings.json (existing settings preserved)
 ✓ Installed /master
 ✓ Installed /optimize
 ✓ Installed /token-usage
@@ -34,14 +49,16 @@ You'll see:
 ✨ Claude Code integration installed successfully!
 
 Next time you run 'claude', you'll have:
-  • Status line showing token usage (updates every 5s)
-  • /master - Run Master Coder orchestration
-  • /optimize - Get session optimization suggestions
-  • /token-usage - View detailed token breakdown
+  • Status line showing token usage (🚧 in development)
+  • /optimize - Session optimization suggestions (✅ working)
+  • /token-usage - Detailed token breakdown (✅ working)
+  • /master - Master Coder orchestration (🚧 in development)
 
 Configuration: ~/.claude/settings.json
 Commands: ~/.claude/commands/
 ```
+
+**Note**: If you had existing settings, they were preserved and backed up to `settings.json.backup`.
 
 ### Step 3: Start Claude Code
 
@@ -49,12 +66,14 @@ Commands: ~/.claude/commands/
 claude
 ```
 
-You'll immediately see:
-- **Status line at bottom**: `[5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr`
-- **Three new slash commands**: `/master`, `/optimize`, `/token-usage`
-- **Automatic tracking**: Every interaction logged for optimization
+You'll now have access to:
+- **Two working slash commands**: `/optimize`, `/token-usage`
+- **Automatic tracking**: Every interaction logged for optimization analysis
+- **Session hooks**: Runs after each response to detect optimization opportunities
 
-That's it! You're ready to go.
+**Note**: Status line and `/master` command are installed but still in development (API endpoint verification needed).
+
+That's it! You're ready to analyze your sessions and get optimization suggestions.
 
 ## Authentication
 
@@ -86,33 +105,7 @@ It updates every 5 seconds showing:
 - **7d**: Current week's total usage
 - **Burn rate**: Cost per hour based on usage patterns
 
-### Slash Command: /master
-
-Run Master Coder orchestration directly in Claude Code:
-
-```
-/master "Implement OAuth2 authentication with Google and GitHub providers"
-```
-
-The Master Coder will:
-1. ✅ Analyze task complexity
-2. ✅ Create specialized agent team (Code Writers, Security Auditor, Test Engineer, etc.)
-3. ✅ Execute with parallel/sequential orchestration
-4. ✅ Only ask for confirmation on major changes (not every step!)
-5. ✅ Show real-time progress
-
-**Autonomy modes** (use with `/master --mode <mode>`):
-- `conservative` - Frequent confirmations
-- `balanced` - Smart gates at important points (default)
-- `trust` - Fully automatic execution
-- `interactive` - Full control every step
-
-Example:
-```
-/master --mode trust "Refactor database layer with comprehensive tests"
-```
-
-### Slash Command: /optimize
+### Slash Command: /optimize ✅
 
 Get instant optimization suggestions for your current session:
 
@@ -143,9 +136,9 @@ The analyzer detects:
 - Redundant tool calls
 - Context optimization
 
-### Slash Command: /token-usage
+### Slash Command: /token-usage ✅
 
-View detailed token breakdown:
+View detailed token breakdown from your current Claude Code session:
 
 ```
 /token-usage
@@ -156,36 +149,30 @@ Shows:
 - Cache reads (free) and cache writes (cost)
 - Session duration and message count
 - Average tokens per message
-- Burn rate and time until limits
+
+**Note**: Uses Claude Code session data. Real-time API tracking coming in v0.2.0.
+
+### Slash Command: /master 🚧
+
+**Status**: In development. Command structure exists but orchestration needs testing.
+
+```
+/master "Your task here"
+```
+
+**Planned features** (v0.2.0):
+- Task complexity analysis
+- Dynamic agent team creation
+- Parallel/sequential execution
+- Multiple autonomy modes
+
+**Current recommendation**: Use standard Claude Code for complex tasks until v0.2.0.
 
 ## Standalone CLI Usage
 
 You can also use claude-helper outside Claude Code:
 
-### Check Token Usage
-
-```bash
-# Quick status check
-claude-helper status
-
-# Watch in real-time
-claude-helper watch
-```
-
-### Run Master Coder from CLI
-
-```bash
-claude-helper run "Implement OAuth2 authentication"
-
-# With options
-claude-helper run \
-  --mode balanced \
-  --max-agents 5 \
-  --token-budget 30000 \
-  "Add login with tests and docs"
-```
-
-### Analyze Past Sessions
+### Analyze Past Sessions ✅
 
 ```bash
 # Analyze recent sessions
@@ -195,22 +182,33 @@ claude-helper analyze --last 10
 claude-helper optimize --last 5
 ```
 
-### Agent Management
+### Agent Management ✅
 
 ```bash
 # List available agent types
 claude-helper agents list
 
-# View statistics
+# View statistics (from database)
 claude-helper agents stats
 
 # Show execution history
 claude-helper agents history --last 20
 ```
 
-### Interactive TUI
+### Check Token Usage 🚧
 
 ```bash
+# Quick status check (API endpoint needs verification)
+claude-helper status
+
+# Watch in real-time (🚧 in development)
+claude-helper watch
+```
+
+### Interactive TUI 🚧
+
+```bash
+# TUI with mock data (wiring to database in progress)
 claude-helper tui
 ```
 
@@ -251,27 +249,7 @@ min_savings_threshold = 500        # Minimum tokens to suggest optimization
 
 ## Example Workflows
 
-### Workflow 1: Feature Development
-
-```bash
-# Run Master Coder with balanced autonomy
-claude-helper run --mode balanced \
-  "Implement user authentication with OAuth2, including:
-   - Google and GitHub providers
-   - JWT token management
-   - Session handling
-   - Comprehensive tests
-   - Security audit
-   - API documentation"
-
-# Master Coder will:
-# 1. Create Architect agent for design
-# 2. Spawn 3 Code Writer agents (providers, middleware, UI)
-# 3. Run Security Auditor and Test Engineer in parallel
-# 4. Generate documentation
-```
-
-### Workflow 2: Optimization Session
+### Workflow 1: Session Optimization (✅ Working)
 
 ```bash
 # Check current usage
@@ -287,14 +265,33 @@ claude-helper optimize --last 10
 claude-helper tui
 ```
 
-### Workflow 3: Daily Monitoring
+### Workflow 2: Database Exploration (✅ Working)
 
 ```bash
-# Watch token usage in real-time
-claude-helper watch
+# View what agents have been created
+claude-helper agents list
 
-# Or add to status bar
-echo 'export PS1="$(claude-helper statusline) $PS1"' >> ~/.bashrc
+# Check database stats
+claude-helper agents stats
+
+# See execution history
+claude-helper agents history
+
+# Launch interactive TUI (shows mock data currently)
+claude-helper tui
+```
+
+### Workflow 3: Configuration Management (✅ Working)
+
+```bash
+# View current settings
+claude-helper config show
+
+# Edit configuration
+claude-helper config edit
+
+# Reset to defaults if needed
+claude-helper config reset
 ```
 
 ## Troubleshooting
@@ -340,61 +337,40 @@ claude-helper --verbose <command>
 claude-helper --verbose run "test task"
 ```
 
-## Performance Tips
+## Performance Tips (For Current Alpha Version)
 
-1. **Use appropriate autonomy mode**
-   - Start with `balanced` for safety
-   - Use `trust` for repetitive tasks
-   - Use `interactive` for critical operations
+1. **Use session analysis regularly**
+   - Run `claude-helper analyze` weekly
+   - Review optimization suggestions
+   - Apply bash chain and file merge recommendations
 
-2. **Set token budgets**
-   - Prevents runaway costs
-   - Example: `--token-budget 10000`
+2. **Monitor database growth**
+   - Check `~/.config/claude-helper/db/` size periodically
+   - Older sessions can be cleaned if needed
 
-3. **Optimize agent count**
-   - More agents = faster but more complex
-   - Start with default (5), adjust as needed
+3. **Configure appropriately**
+   - Set `min_savings_threshold` to filter minor optimizations
+   - Adjust `history_depth` based on your usage patterns
 
-4. **Monitor regularly**
-   - Use `watch` command
-   - Check `status` before big tasks
-   - Review `optimize` suggestions weekly
+4. **Leverage slash commands in Claude Code**
+   - Use `/optimize` during long sessions
+   - Check `/token-usage` to understand patterns
 
-## Advanced Usage
+## Advanced Usage (Coming in v0.2.0+)
 
-### Custom Agent Templates
+The following features are planned but not yet implemented:
 
-Create custom agent configurations in `~/.config/claude-helper/agents/`:
+### Custom Agent Templates 🚧
 
-```yaml
-# custom-reviewer.yaml
-name: "Custom Code Reviewer"
-capability: "Review"
-system_prompt: |
-  You are a specialized code reviewer focusing on:
-  - Performance optimization
-  - Security best practices
-  - Code maintainability
+Custom YAML-based agent configurations planned for v0.3.0.
 
-  Provide actionable feedback with specific examples.
-```
+### Batch Processing 🚧
 
-### Batch Processing
+Batch task processing planned once Master Coder orchestration is stable (v0.2.0).
 
-```bash
-# Process multiple tasks
-for task in "feature1" "feature2" "feature3"; do
-  claude-helper run --mode trust "$task"
-done
-```
+### Integration with CI/CD 🚧
 
-### Integration with CI/CD
-
-```bash
-# In your CI pipeline
-claude-helper run --mode trust --token-budget 20000 \
-  "Review PR and suggest improvements"
-```
+CI/CD integration planned for v1.0.0.
 
 ## Getting Help
 
@@ -419,13 +395,23 @@ cat ~/.config/claude-helper/README.md
 4. 💡 **Request features**: GitHub Discussions
 5. 🤝 **Contribute**: See CONTRIBUTING.md
 
-## Tips for Success
+## Tips for Success (Alpha Version)
 
-- ✅ Start with small tasks to learn the system
-- ✅ Use `--mode balanced` until comfortable
-- ✅ Monitor token usage regularly
-- ✅ Review optimization suggestions
-- ✅ Keep token budgets reasonable
-- ✅ Use the TUI for interactive exploration
+- ✅ Focus on session analysis - it works great!
+- ✅ Use `/optimize` regularly during Claude Code sessions
+- ✅ Review and apply optimization suggestions
+- ✅ Check database stats with `claude-helper agents stats`
+- ✅ Report bugs on GitHub - this is alpha software
+- ✅ Star the repo and watch for v0.2.0 updates
+
+### What to Expect in v0.2.0
+
+- ✅ Verified real-time token tracking
+- ✅ Fully tested Master Coder orchestration
+- ✅ TUI wired to real database
+- ✅ Bug fixes from TODO.md
+- ✅ Comprehensive test coverage
 
 Happy coding! 🚀
+
+**Remember**: This is alpha software. Session analysis works well, but some features are still being polished. Check the README for current status.
