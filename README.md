@@ -9,7 +9,7 @@
 
 Claude Helper supercharges your Claude Code sessions with intelligent features that appear directly in your Claude Code window:
 
-- 📊 **Live Status Line**: Real-time token usage displayed at the bottom of Claude Code (updates every 5s)
+- 📊 **Status Line Integration**: Framework for real-time token usage (API verification in progress)
 - 🔍 **/optimize Command**: Analyze your session and get instant optimization suggestions
 - 📈 **/token-usage Command**: Detailed token breakdown and cost analysis
 - 🤖 **Session Hooks**: Automatic tracking and learning from every Claude interaction
@@ -116,7 +116,7 @@ sudo mv target/release/claude-helper /usr/local/bin/
 ### 2. Install Claude Code Integration
 
 ```bash
-# This installs the status line, hooks, and slash commands
+# This installs slash commands, hooks, and status line framework
 claude-helper install-claude-integration
 ```
 
@@ -124,6 +124,7 @@ This will:
 - ✅ Merge settings into `~/.claude/settings.json` (preserves existing settings)
 - ✅ Add `/master`, `/optimize`, and `/token-usage` commands
 - ✅ Configure session hooks for automatic tracking
+- ✅ Install status line configuration (real-time tracking in v0.2.0)
 
 ### 3. Start Claude Code
 
@@ -131,12 +132,13 @@ This will:
 claude
 ```
 
-You'll immediately see:
-- **Status line at the bottom**: `[5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr`
-- **Available slash commands**: Type `/master`, `/optimize`, or `/token-usage`
+You'll have access to:
+- **Slash commands**: `/optimize` (✅ working) and `/token-usage` (✅ working) for analysis
+- **Slash command**: `/master` (🚧 in development) for orchestration
 - **Automatic session tracking**: Every interaction is logged for optimization
+- **Status line**: Framework installed, real-time tracking coming in v0.2.0
 
-That's it! Claude Code is now supercharged.
+That's it! Claude Code integration is set up.
 
 ## ⚙️ Configuration
 
@@ -208,18 +210,22 @@ auto_suggest = true
 
 ## 💻 Claude Code Integration Features
 
-### Status Line (Automatic)
+### Status Line 🚧 (In Development)
 
-Appears at the bottom of Claude Code window, updating every 5 seconds:
+**Status**: Framework implemented, API endpoint verification needed.
+
+The status line will appear at the bottom of Claude Code window when fully functional:
 
 ```
 [5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr
 ```
 
-Shows:
+Planned display:
 - **5-hour usage**: Current rolling 5-hour window (Claude Code limit)
 - **7-day usage**: Current week's total usage
 - **Burn rate**: Cost per hour based on current usage patterns
+
+**Note**: Currently uses mock data. Real-time tracking coming in v0.2.0 after API endpoint verification.
 
 ### Slash Commands
 

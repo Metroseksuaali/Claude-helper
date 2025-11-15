@@ -139,7 +139,8 @@ For **minor changes** (bug fixes, documentation, small improvements):
 
 - Browse the [issue tracker](https://github.com/Metroseksuaali/Claude-helper/issues)
 - Look for issues labeled `good first issue` or `help wanted`
-- Check the project roadmap in TESTING.md for planned features
+- Check the project roadmap in [README.md](README.md#-roadmap) for planned features
+- Review [TODO.md](TODO.md) for known issues and improvements
 
 ## Coding Standards
 

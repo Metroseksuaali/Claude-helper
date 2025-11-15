@@ -32,7 +32,7 @@ sudo cp target/release/claude-helper /usr/local/bin/
 ### Step 2: Install Claude Code Integration
 
 ```bash
-# This sets up status line, hooks, and slash commands
+# This sets up slash commands, hooks, and status line framework
 claude-helper install-claude-integration
 ```
 
@@ -92,18 +92,22 @@ claude-helper config set-api-key
 
 ## Using Claude Helper in Claude Code
 
-### Status Line (Automatic)
+### Status Line 🚧 (Framework Installed, Not Yet Functional)
 
-After installation, the status line appears automatically at the bottom:
+**Status**: Configuration installed, real-time API tracking coming in v0.2.0.
+
+When fully functional (v0.2.0), the status line will appear at the bottom:
 
 ```
 [5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr
 ```
 
-It updates every 5 seconds showing:
+Planned updates every 5 seconds showing:
 - **5h**: Current rolling 5-hour window (Claude Code's rate limit)
 - **7d**: Current week's total usage
 - **Burn rate**: Cost per hour based on usage patterns
+
+**Current workaround**: Use `/token-usage` slash command for session token analysis.
 
 ### Slash Command: /optimize ✅
 
