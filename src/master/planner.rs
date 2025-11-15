@@ -78,11 +78,26 @@ impl TaskPlanner {
     }
 
     fn estimate_complexity(&self, task: &str) -> u8 {
-        // TODO: Add input validation - reject empty strings or extremely long inputs (>10000 chars)
-        // TODO: Add tests for edge cases: empty string, single char, Unicode, null bytes
-        // TODO: Add tests for boundary values: should never exceed 10 or go below 0
-        // TODO: Add tests for case insensitivity: "REFACTOR" should match "refactor"
-        // TODO: Add tests for keyword repetition: "refactor refactor" should not double-count
+        // Input validation
+        // 1. Handle empty or whitespace-only strings
+        let task_trimmed = task.trim();
+        if task_trimmed.is_empty() {
+            return 3; // Base complexity for empty input
+        }
+
+        // 2. Sanitize null bytes which could cause issues
+        let task_clean = task_trimmed.replace('\0', "");
+
+        // 3. Truncate extremely long inputs to prevent DoS
+        let task_normalized = if task_clean.len() > 10_000 {
+            tracing::warn!(
+                "Task description too long ({} chars), truncating to 10,000",
+                task_clean.len()
+            );
+            &task_clean[..10_000]
+        } else {
+            &task_clean
+        };
 
         let mut complexity = 3; // Base complexity
 
@@ -114,7 +129,7 @@ impl TaskPlanner {
         ];
 
         // Convert to lowercase for case-insensitive matching
-        let task_lower = task.to_lowercase();
+        let task_lower = task_normalized.to_lowercase();
 
         for keyword in &high_complexity_keywords {
             if task_lower.contains(keyword) {
@@ -139,10 +154,18 @@ impl TaskPlanner {
     fn detect_capabilities(&self, task: &str) -> Vec<AgentCapability> {
         // TODO: Add tests for multiple capability detection
         // TODO: Add tests for default CodeWriting fallback
-        // TODO: Add tests for edge cases: empty input should return default
+
+        // Input validation - handle empty/whitespace and sanitize null bytes
+        let task_trimmed = task.trim();
+        let task_clean = task_trimmed.replace('\0', "");
+        let task_normalized = if task_clean.len() > 10_000 {
+            &task_clean[..10_000]
+        } else {
+            &task_clean
+        };
 
         let mut capabilities = Vec::new();
-        let task_lower = task.to_lowercase();
+        let task_lower = task_normalized.to_lowercase();
 
         let capability_keywords = vec![
             (
