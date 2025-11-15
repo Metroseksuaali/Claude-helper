@@ -1,0 +1,7 @@
+{
+  "statusLine": "claude-helper statusline",
+  "hooks": {
+    "sessionStart": "claude-helper session-start",
+    "afterResponse": "claude-helper log-usage"
+  }
+}
