@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use tracing::{debug, warn};
 use crate::cache::Cache;
 use crate::config::Config;
 
@@ -60,20 +61,20 @@ impl UsageTracker {
     pub async fn get_usage(&self) -> Result<Usage> {
         // Try to get from cache first (5 second TTL)
         if let Ok(Some(usage)) = self.cache.get::<Usage>("usage") {
+            debug!("Using cached usage data");
             return Ok(usage);
         }
 
-        // Try to fetch from Claude API
-        let usage = match self.fetch_from_api().await {
-            Ok(usage) => usage,
-            Err(_) => {
-                // Fallback to mock data for testing
-                self.mock_usage()
-            }
-        };
+        // Fetch from Claude API
+        let usage = self.fetch_from_api().await.context(
+            "Failed to fetch usage data from API. \
+             Please check your authentication and network connection."
+        )?;
 
         // Cache the result for 5 seconds
-        let _ = self.cache.set("usage", usage.clone(), 5);
+        if let Err(e) = self.cache.set("usage", usage.clone(), 5) {
+            warn!("Failed to cache usage data: {}", e);
+        }
 
         Ok(usage)
     }
@@ -160,8 +161,12 @@ impl UsageTracker {
         }
     }
 
+    /// Returns mock usage data for testing purposes only.
+    /// This is NOT used as an automatic fallback when the API fails.
+    /// Use this explicitly in tests or development.
+    #[allow(dead_code)]
     fn mock_usage(&self) -> Usage {
-        // Mock data for testing when API is not available
+        // Mock data for explicit testing only
         Usage {
             five_hour_used: 14_000,
             five_hour_limit: 20_000,

@@ -266,7 +266,6 @@ async fn handle_agent_action(action: AgentAction, config: &Config) -> Result<()>
 
 async fn install_claude_integration() -> Result<()> {
     use std::fs;
-    use std::path::PathBuf;
     use anyhow::Context;
     use serde_json::Value;
 
