@@ -6,6 +6,9 @@ use colored::Colorize;
 use std::io::Write;
 use usage_tracker::UsageTracker;
 
+// Re-export for external use
+pub use usage_tracker::Usage;
+
 pub struct StatusLine {
     config: Config,
     tracker: UsageTracker,

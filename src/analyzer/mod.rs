@@ -5,8 +5,11 @@ use crate::config::Config;
 use crate::db::Database;
 use anyhow::Result;
 use colored::Colorize;
-use optimizer::{Optimization, Optimizer};
+use optimizer::Optimizer;
 use session_parser::SessionParser;
+
+// Re-export for external use
+pub use optimizer::Optimization;
 
 pub struct SessionAnalyzer {
     config: Config,
