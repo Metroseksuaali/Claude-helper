@@ -65,36 +65,11 @@ claude-helper watch
 
 ### Prerequisites
 
-<<<<<<< HEAD
 - **Rust** 1.70+ (for building from source)
 - **Claude Code** installed OR **Anthropic API key**
 - **Git** (for source installation)
 
-### Quick Install (Recommended)
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Metroseksuaali/Claude-helper/main/install.sh | sh
-```
-
-This script automatically:
-- Detects your platform
-- Downloads the latest release
-- Installs to `/usr/local/bin/`
-- Sets up necessary permissions
-
-### From Source
-=======
-# Get specific suggestions
-claude-helper optimize --session <id>
-
-# Interactive TUI for exploration
-claude-helper tui
-```
-
-## Quick Start
-
 ### 1. Install Claude Helper
->>>>>>> claude/hei-halua-019cvGVdtGbAnhb2Fb6h6pXv
 
 ```bash
 # From source (Recommended for now)
@@ -111,11 +86,8 @@ sudo mv target/release/claude-helper /usr/local/bin/
 claude-helper install-claude-integration
 ```
 
-<<<<<<< HEAD
-## ⚙️ Configuration
-=======
 This will:
-- ✅ Create `~/.claude/settings.json` with status line configuration
+- ✅ Merge settings into `~/.claude/settings.json` (preserves existing settings)
 - ✅ Add `/master`, `/optimize`, and `/token-usage` commands
 - ✅ Configure session hooks for automatic tracking
 
@@ -132,8 +104,7 @@ You'll immediately see:
 
 That's it! Claude Code is now supercharged.
 
-## Configuration
->>>>>>> claude/hei-halua-019cvGVdtGbAnhb2Fb6h6pXv
+## ⚙️ Configuration
 
 ### Authentication Methods
 
@@ -201,15 +172,9 @@ min_savings_threshold = 500
 auto_suggest = true
 ```
 
-<<<<<<< HEAD
-## 💻 Usage
-
-### Basic Commands
-=======
-## Claude Code Integration Features
+## 💻 Claude Code Integration Features
 
 ### Status Line (Automatic)
->>>>>>> claude/hei-halua-019cvGVdtGbAnhb2Fb6h6pXv
 
 Appears at the bottom of Claude Code window, updating every 5 seconds:
 
@@ -304,85 +269,7 @@ claude-helper analyze
 # Interactive TUI
 claude-helper tui
 
-<<<<<<< HEAD
-# Get optimization report
-claude-helper optimize --last 10
-
-# Export session data
-claude-helper export --format json --output sessions.json
-```
-
-## 🎯 Master Coder System
-
-The Master Coder uses intelligent orchestration to handle complex tasks:
-
-### How It Works
-
-```bash
-# Example: Run a complex task
-claude-helper run "Implement OAuth2 authentication with tests"
-```
-
-**The Master Coder will:**
-
-1. **Analyze** - Understand requirements, complexity, and scope
-2. **Plan** - Determine optimal agent team composition
-3. **Create** - Spawn specialized agents dynamically
-4. **Orchestrate** - Manage dependencies and parallel execution
-5. **Review** - Ensure quality and consistency
-6. **Learn** - Store insights for future improvements
-
-### Autonomy Modes
-
-| Mode | Description | Use Case |
-|------|-------------|----------|
-| `conservative` | Asks for approval frequently | High-stakes changes, learning the tool |
-| `balanced` | Approval at important points | Daily development (default) |
-| `trust` | Fully automatic execution | Routine tasks, refactoring |
-| `interactive` | Full control over every step | Complex debugging, exploration |
-
-**Examples:**
-
-```bash
-# Conservative mode for critical changes
-claude-helper run --mode conservative "Migrate database schema"
-
-# Trust mode for routine work
-claude-helper run --mode trust "Add unit tests to utils module"
-
-# Interactive mode for exploration
-claude-helper run --mode interactive "Investigate performance issues"
-```
-
-### Agent Types
-
-The Master Coder dynamically creates specialized agents based on task requirements:
-
-| Agent Type | Purpose | When Created |
-|------------|---------|--------------|
-| **Code Writer** | Write and modify code | Most tasks |
-| **Architect** | High-level design and planning | Complex features |
-| **Test Engineer** | Comprehensive testing | When tests are needed |
-| **Security Auditor** | Vulnerability scanning | Auth, API, sensitive code |
-| **Documentation Writer** | API docs, README, comments | Documentation tasks |
-| **Debugger** | Bug finding and fixing | When issues are reported |
-| **Performance Optimizer** | Profiling and optimization | Performance tasks |
-| **Migration Specialist** | Database/code migrations | Migration work |
-| **Reviewer** | Code review and quality checks | Before finalizing |
-
-### Advanced Usage
-
-```bash
-# Run with custom agent configuration
-claude-helper run --agents-config custom-agents.yaml "Complex task"
-
-# Set token budget for a task
-claude-helper run --budget 10000 "Quick refactor"
-
-# Review agent performance
-=======
 # Agent statistics
->>>>>>> claude/hei-halua-019cvGVdtGbAnhb2Fb6h6pXv
 claude-helper agents stats
 
 # List all available agents
