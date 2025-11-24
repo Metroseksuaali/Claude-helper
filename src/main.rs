@@ -305,28 +305,33 @@ async fn install_claude_integration() -> Result<()> {
 
     // Add/update our settings
     if let Some(obj) = settings.as_object_mut() {
-        // Add status line
+        // Add status line (correct Claude Code format)
         obj.insert(
             "statusLine".to_string(),
-            Value::String("claude-helper statusline".to_string()),
+            serde_json::json!({
+                "type": "command",
+                "command": "claude-helper statusline",
+                "padding": 0
+            }),
         );
 
-        // Add hooks (preserving existing hooks if any)
-        let mut hooks = obj.get("hooks")
-            .and_then(|h| h.as_object())
-            .cloned()
-            .unwrap_or_default();
-
-        hooks.insert(
-            "sessionStart".to_string(),
-            Value::String("claude-helper session-start".to_string()),
+        // Add hooks (correct Claude Code format with matcher)
+        obj.insert(
+            "hooks".to_string(),
+            serde_json::json!({
+                "PostToolUse": [
+                    {
+                        "matcher": "*",
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "claude-helper log-usage"
+                            }
+                        ]
+                    }
+                ]
+            }),
         );
-        hooks.insert(
-            "afterResponse".to_string(),
-            Value::String("claude-helper log-usage".to_string()),
-        );
-
-        obj.insert("hooks".to_string(), Value::Object(hooks));
     }
 
     // Write updated settings

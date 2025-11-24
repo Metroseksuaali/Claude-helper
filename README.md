@@ -9,14 +9,14 @@
 
 Claude Helper supercharges your Claude Code sessions with intelligent features that appear directly in your Claude Code window:
 
-- 📊 **Live Status Line**: Real-time token usage displayed at the bottom of Claude Code (updates every 5s)
-- 🔍 **/optimize Command**: Analyze your session and get instant optimization suggestions
-- 📈 **/token-usage Command**: Detailed token breakdown and cost analysis
-- 🤖 **Session Hooks**: Automatic tracking and learning from every Claude interaction
+- 📊 **Live Status Line**: Token usage displayed at the bottom of Claude Code ⚠️ *Shows mock data (alpha)*
+- 🔍 **/optimize Command**: Analyze your session and get instant optimization suggestions ✅ *Working*
+- 📈 **/token-usage Command**: Detailed token breakdown and cost analysis ✅ *Working*
+- 🤖 **Session Hooks**: Automatic tracking and learning from every Claude interaction ✅ *Working*
 - ⚡ **Lightning Fast**: ~8ms execution time (15x faster than Node.js alternatives)
 - 💾 **SQLite Database**: Stores session history and optimization suggestions
 
-**⚠️ Current Status**: Alpha - Core infrastructure implemented, API integration in progress
+**⚠️ Current Status**: Alpha - Core infrastructure working, real-time usage tracking shows mock data pending Claude.ai API access
 
 ## What Works Now ✅
 
@@ -32,9 +32,20 @@ Claude Helper supercharges your Claude Code sessions with intelligent features t
 
 ### In Development 🚧
 - 🚧 **Master Coder System**: Multi-agent orchestration (structure implemented, testing in progress)
-- 🚧 **Real-time Token Tracking**: API endpoint needs verification
+- 🚧 **Real-time Token Tracking**: Currently shows mock data - Claude.ai usage API is Cloudflare-protected
 - 🚧 **TUI Dashboard**: Interactive terminal UI (shows mock data currently)
 - 🚧 **Agent Execution**: Claude API integration needs live testing
+
+### ⚠️ Alpha Limitations
+
+**Status Line Mock Data**: The status line currently displays mock usage data:
+- **Why**: Claude.ai usage API endpoints are protected by Cloudflare and return bot-detection pages
+- **Shows**: `[MOCK] [5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr`
+- **Future**: Will implement real usage tracking via:
+  - Finding correct API endpoint, or
+  - Parsing session files/debug logs, or
+  - Estimating from message count
+- **Tracking**: [Issue #15](https://github.com/Metroseksuaali/Claude-helper/issues) for progress
 
 **This tool integrates WITH Claude Code - when you type `claude` in your terminal, Claude Code opens with all these enhanced features available.**
 

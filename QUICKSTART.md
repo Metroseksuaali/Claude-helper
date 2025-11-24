@@ -92,18 +92,24 @@ claude-helper config set-api-key
 
 ## Using Claude Helper in Claude Code
 
-### Status Line (Automatic)
+### Status Line (Automatic) ⚠️ Shows Mock Data
 
 After installation, the status line appears automatically at the bottom:
 
 ```
-[5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr
+[MOCK] [5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr
 ```
 
-It updates every 5 seconds showing:
-- **5h**: Current rolling 5-hour window (Claude Code's rate limit)
-- **7d**: Current week's total usage
-- **Burn rate**: Cost per hour based on usage patterns
+**⚠️ Alpha Limitation**: Currently displays **mock data** because:
+- Claude.ai usage API endpoints are Cloudflare-protected
+- Real-time usage tracking is in development
+- See [README.md](README.md#alpha-limitations) for details
+
+The format shows:
+- **[MOCK]**: Indicator that this is sample data
+- **5h**: Would show rolling 5-hour window (Claude Code's rate limit)
+- **7d**: Would show current week's total usage
+- **Burn rate**: Would show cost per hour based on usage patterns
 
 ### Slash Command: /optimize ✅
 
