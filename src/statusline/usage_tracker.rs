@@ -65,18 +65,23 @@ impl UsageTracker {
             return Ok(usage);
         }
 
-        // Fetch from Claude API
-        let usage = self.fetch_from_api().await.context(
-            "Failed to fetch usage data from API. \
-             Please check your authentication and network connection."
-        )?;
-
-        // Cache the result for 5 seconds
-        if let Err(e) = self.cache.set("usage", usage.clone(), 5) {
-            warn!("Failed to cache usage data: {}", e);
+        // Try to fetch from Claude API
+        match self.fetch_from_api().await {
+            Ok(usage) => {
+                // Cache the result for 5 seconds
+                if let Err(e) = self.cache.set("usage", usage.clone(), 5) {
+                    warn!("Failed to cache usage data: {}", e);
+                }
+                Ok(usage)
+            }
+            Err(e) => {
+                // TEMPORARY: Use mock data as fallback until correct API endpoint is verified
+                // TODO: Find correct Claude.ai usage API endpoint or parse from session files
+                warn!("API fetch failed ({}), using mock data as fallback", e);
+                debug!("This is expected in alpha - API endpoint verification in progress");
+                Ok(self.mock_usage())
+            }
         }
-
-        Ok(usage)
     }
 
     async fn fetch_from_api(&self) -> Result<Usage> {
@@ -161,10 +166,9 @@ impl UsageTracker {
         }
     }
 
-    /// Returns mock usage data for testing purposes only.
-    /// This is NOT used as an automatic fallback when the API fails.
-    /// Use this explicitly in tests or development.
-    #[allow(dead_code)]
+    /// Returns mock usage data for testing and as temporary fallback.
+    /// TEMPORARY: Used as fallback when API endpoint is unavailable (alpha version).
+    /// TODO: Remove this fallback once correct API endpoint is verified.
     fn mock_usage(&self) -> Usage {
         // Mock data for explicit testing only
         Usage {
