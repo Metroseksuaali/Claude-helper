@@ -25,9 +25,10 @@ impl StatusLine {
     pub async fn render_line(&self) -> Result<()> {
         let usage = self.tracker.get_usage().await?;
 
-        // Format: [5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr
+        // Format: [MOCK] [5h: 14k/20k 70%] [7d: 130k/200k 65%] $0.15/hr
+        // Note: Currently shows mock data until Claude.ai usage API is available
         let line = format!(
-            "[5h: {}/{}k {}%] [7d: {}/{}k {}%] ${:.2}/hr",
+            "[MOCK] [5h: {}/{}k {}%] [7d: {}/{}k {}%] ${:.2}/hr",
             usage.five_hour_used / 1000,
             usage.five_hour_limit / 1000,
             usage.five_hour_percent,
