@@ -55,30 +55,36 @@ impl AuthConfig {
 
     /// Get token from Claude Code session
     async fn get_claude_code_token(&self) -> Result<String> {
-        // Try to read session cookie from Claude Code
+        // Try to read OAuth token from .credentials.json (new Claude Code format)
+        let home = dirs::home_dir()
+            .context("Could not find home directory")?;
+        let credentials_path = home.join(".claude").join(".credentials.json");
+
+        if credentials_path.exists() {
+            // Parse credentials.json
+            let credentials_content = fs::read_to_string(&credentials_path)
+                .context("Failed to read .credentials.json")?;
+
+            let credentials: serde_json::Value = serde_json::from_str(&credentials_content)
+                .context("Failed to parse .credentials.json")?;
+
+            // Extract accessToken from claudeAiOauth
+            if let Some(token) = credentials
+                .get("claudeAiOauth")
+                .and_then(|oauth| oauth.get("accessToken"))
+                .and_then(|token| token.as_str())
+            {
+                return Ok(token.to_string());
+            }
+        }
+
+        // Fallback: Try old session format for backwards compatibility
         let session_path = self
             .claude_code_session_path
             .clone()
             .or_else(Self::default_session_path)
             .context("Could not determine Claude Code session path")?;
 
-        // Check if session directory exists
-        if !session_path.exists() {
-            anyhow::bail!(
-                "Claude Code session directory not found at {:?}. \
-                Please ensure Claude Code is installed and you're logged in, \
-                or use API key authentication instead.",
-                session_path
-            );
-        }
-
-        // Read session cookie/token
-        // Note: This is a simplified version. In production, you'd need to:
-        // 1. Parse the session files properly
-        // 2. Handle session refresh
-        // 3. Validate session is still active
-
-        // For now, we'll look for a sessionKey file
         let session_key_file = session_path.join("sessionKey");
         if session_key_file.exists() {
             let token = fs::read_to_string(&session_key_file)
@@ -86,13 +92,13 @@ impl AuthConfig {
                 .trim()
                 .to_string();
 
-            Ok(token)
-        } else {
-            anyhow::bail!(
-                "No active Claude Code session found. \
-                Please log in to Claude Code or use API key authentication."
-            )
+            return Ok(token);
         }
+
+        anyhow::bail!(
+            "No active Claude Code session found. \
+            Please log in to Claude Code or use API key authentication."
+        )
     }
 
     /// Validate authentication configuration
